@@ -64,7 +64,7 @@ public class UIWindow {
       GL32.glClear(GL32.GL_COLOR_BUFFER_BIT | GL32.GL_DEPTH_BUFFER_BIT | GL32.GL_STENCIL_BUFFER_BIT);
       this.renderer.drawGL();
       long end = System.nanoTime();
-      double fps = 1000000000.0d / (double)(start - end);
+      double fps = 1000000000.0d / (double)(end - start);
 
       // NanoVG rendering
       GL.createCapabilities();
@@ -76,7 +76,7 @@ public class UIWindow {
         NVGColor red = NVGColor.malloc().r(1.0f).g(0.0f).b(0.0f).a(1.0f);
         NanoVG.nvgFillColor(nanovg, red);
         NanoVG.nvgStrokeColor(nanovg, red);
-        NanoVG.nvgFontFace(nanovg, "JetBrains Mono");
+        NanoVG.nvgFontFaceId(nanovg, debugFont);
         NanoVG.nvgFontSize(nanovg, 25);
 
         NanoVG.nvgBeginPath(nanovg);
