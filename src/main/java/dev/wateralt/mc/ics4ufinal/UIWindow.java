@@ -55,8 +55,6 @@ public class UIWindow {
 
   public void run() {
     while(!GLFW.glfwWindowShouldClose(window)) {
-      //todo draw self
-
       // OpenGL rendering
       long start = System.nanoTime();
       GL32.glEnable(GL32.GL_DEPTH_TEST);
