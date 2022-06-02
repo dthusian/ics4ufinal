@@ -166,7 +166,7 @@ public class MahjongRenderer {
     GL32.glUniformMatrix4fv(gg_uniformTransformMatTex, false, buf);
     GL32.glUniformMatrix4fv(gg_uniformTransformMatColor, false, buf);
     GL32.glBindBuffer(GL32.GL_ELEMENT_ARRAY_BUFFER, gb_model_idx);
-    GL32.glDrawElements(GL32.GL_TRIANGLES, 12, GL32.GL_INT, 0);
+    GL32.glDrawElements(GL32.GL_TRIANGLES, 12, GL32.GL_UNSIGNED_INT, 0);
   }
 
   public void drawVG(long nanovg) { }

@@ -48,8 +48,8 @@ public class UIWindow {
     width = fw[0];
     height = fh[0];
     dpi = dpix[0];
-    nanovg = NanoVGGL3.nvgCreate(NanoVGGL3.NVG_ANTIALIAS | NanoVGGL3.NVG_STENCIL_STROKES | (Util.DEBUG ? NanoVGGL3.NVG_DEBUG : 0));
-    debugFont = NanoVG.nvgCreateFont(nanovg, "Jetbrains Mono", Util.ASSET_ROOT + "/JetBrainsMono-Regular.ttf");
+    //nanovg = NanoVGGL3.nvgCreate(NanoVGGL3.NVG_ANTIALIAS | NanoVGGL3.NVG_STENCIL_STROKES | (Util.DEBUG ? NanoVGGL3.NVG_DEBUG : 0));
+    //debugFont = NanoVG.nvgCreateFont(nanovg, "Jetbrains Mono", Util.ASSET_ROOT + "/JetBrainsMono-Regular.ttf");
 
     // GLFW callbacks
     GLFW.glfwSetKeyCallback(window, (wnd, key, scancode, action, mods) -> {
@@ -75,7 +75,7 @@ public class UIWindow {
 
       // NanoVG rendering
       GL.createCapabilities();
-      GL32.glEnable(GL32.GL_STENCIL_TEST);
+      /*GL32.glEnable(GL32.GL_STENCIL_TEST);
       GL32.glClear(GL32.GL_STENCIL_BUFFER_BIT);
       NanoVG.nvgBeginFrame(nanovg, width, height, dpi);
       this.renderer.drawVG(nanovg);
@@ -95,7 +95,7 @@ public class UIWindow {
         red.free();
       }
       NanoVG.nnvgEndFrame(nanovg);
-
+      */
       // GLFW
       GLFW.glfwSwapBuffers(window);
     }
