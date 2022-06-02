@@ -23,9 +23,12 @@ public class UIWindow {
 
   double mouseX, mouseY;
 
+  boolean mouse1;
+
   public UIWindow(String title) {
     mouseX = 0;
     mouseY = 0;
+    mouse1 = false;
     // GLFW
     GLFWErrorCallback.createPrint().set();
     if(!GLFW.glfwInit()) throw new NativeLibraryException("GLFW.glfwInit failed");
@@ -52,8 +55,8 @@ public class UIWindow {
     width = fw[0];
     height = fh[0];
     dpi = dpix[0];
-    //nanovg = NanoVGGL3.nvgCreate(NanoVGGL3.NVG_ANTIALIAS | NanoVGGL3.NVG_STENCIL_STROKES | (Util.DEBUG ? NanoVGGL3.NVG_DEBUG : 0));
-    //debugFont = NanoVG.nvgCreateFont(nanovg, "Jetbrains Mono", Util.ASSET_ROOT + "/JetBrainsMono-Regular.ttf");
+    nanovg = NanoVGGL3.nvgCreate(NanoVGGL3.NVG_ANTIALIAS | NanoVGGL3.NVG_STENCIL_STROKES | (Util.DEBUG ? NanoVGGL3.NVG_DEBUG : 0));
+    debugFont = NanoVG.nvgCreateFont(nanovg, "Jetbrains Mono", Util.ASSET_ROOT + "/JetBrainsMono-Regular.ttf");
 
     // GLFW callbacks
     GLFW.glfwSetKeyCallback(window, (wnd, key, scancode, action, mods) -> {
@@ -61,8 +64,15 @@ public class UIWindow {
         GLFW.glfwSetWindowShouldClose(wnd, true);
       }
     });
+    GLFW.glfwSetMouseButtonCallback(window, (wnd, button, action, mods) -> {
+      if(button == GLFW.GLFW_MOUSE_BUTTON_1) {
+        mouse1 = action == GLFW.GLFW_PRESS;
+      }
+    });
     GLFW.glfwSetCursorPosCallback(window, (wnd, newMouseX, newMouseY) -> {
-      renderer.rotateView((newMouseY - mouseY) / 5, (newMouseX - mouseX) / 5);
+      if(mouse1) {
+        renderer.rotateView((mouseY - newMouseY) / 5, (mouseX - newMouseX) / 5);
+      }
       mouseX = newMouseX;
       mouseY = newMouseY;
     });
@@ -84,7 +94,7 @@ public class UIWindow {
 
       // NanoVG rendering
       GL.createCapabilities();
-      /*GL32.glEnable(GL32.GL_STENCIL_TEST);
+      GL32.glEnable(GL32.GL_STENCIL_TEST);
       GL32.glClear(GL32.GL_STENCIL_BUFFER_BIT);
       NanoVG.nvgBeginFrame(nanovg, width, height, dpi);
       this.renderer.drawVG(nanovg);
@@ -104,7 +114,7 @@ public class UIWindow {
         red.free();
       }
       NanoVG.nnvgEndFrame(nanovg);
-      */
+
       // GLFW
       GLFW.glfwSwapBuffers(window);
     }
