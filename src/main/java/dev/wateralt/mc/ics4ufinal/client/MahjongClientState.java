@@ -1,7 +1,6 @@
-package dev.wateralt.mc.ics4ufinal;
+package dev.wateralt.mc.ics4ufinal.client;
 
-import dev.wateralt.mc.ics4ufinal.pod.MahjongTile;
-import dev.wateralt.mc.ics4ufinal.pod.Tuple2;
+import dev.wateralt.mc.ics4ufinal.common.MahjongTile;
 
 import java.util.ArrayList;
 

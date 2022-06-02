@@ -1,10 +1,10 @@
-package dev.wateralt.mc.ics4ufinal.pod;
+package dev.wateralt.mc.ics4ufinal.common;
 
 import java.util.Objects;
 
 public class Tuple2<T1, T2> {
-  private T1 v1;
-  private T2 v2;
+  private final T1 v1;
+  private final T2 v2;
 
   public Tuple2(T1 a1, T2 a2) {
     v1 = a1;

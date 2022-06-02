@@ -1,8 +1,11 @@
 // UIWindow.java - NanoVG+GLFW UI renderer that can also render OpenGL scene
 
-package dev.wateralt.mc.ics4ufinal;
+package dev.wateralt.mc.ics4ufinal.client;
 
-import dev.wateralt.mc.ics4ufinal.exception.NativeLibraryException;
+import dev.wateralt.mc.ics4ufinal.client.uilayers.MahjongRenderer;
+import dev.wateralt.mc.ics4ufinal.client.uilayers.UILayer;
+import dev.wateralt.mc.ics4ufinal.common.Util;
+import dev.wateralt.mc.ics4ufinal.common.exception.NativeLibraryException;
 import org.lwjgl.glfw.GLFW;
 import org.lwjgl.glfw.GLFWErrorCallback;
 import org.lwjgl.glfw.GLFWVidMode;
@@ -12,27 +15,23 @@ import org.lwjgl.nanovg.NanoVGGL3;
 import org.lwjgl.opengl.GL;
 import org.lwjgl.opengl.GL32;
 
-public class UIWindow {
-  GLFWVidMode videoMode;
+import java.util.ArrayList;
+
+public class Window {
+  // Window State
   long window;
-  long nanovg;
-  MahjongRenderer renderer;
   int width, height;
   float dpi;
-  int debugFont;
+  long nanovg;
+  ArrayList<UILayer> layers;
+  double fps;
 
-  double mouseX, mouseY;
-
-  boolean mouse1;
-
-  public UIWindow(String title) {
-    mouseX = 0;
-    mouseY = 0;
-    mouse1 = false;
+  public Window(String title) {
+    layers = new ArrayList<>();
     // GLFW
     GLFWErrorCallback.createPrint().set();
     if(!GLFW.glfwInit()) throw new NativeLibraryException("GLFW.glfwInit failed");
-    videoMode = GLFW.glfwGetVideoMode(GLFW.glfwGetPrimaryMonitor());
+    GLFWVidMode videoMode = GLFW.glfwGetVideoMode(GLFW.glfwGetPrimaryMonitor());
     if(videoMode == null) throw new NativeLibraryException("Failed to query monitor size");
     GLFW.glfwWindowHint(GLFW.GLFW_RESIZABLE, GLFW.GLFW_FALSE);
     GLFW.glfwWindowHint(GLFW.GLFW_OPENGL_PROFILE, GLFW.GLFW_OPENGL_CORE_PROFILE);
@@ -56,7 +55,6 @@ public class UIWindow {
     height = fh[0];
     dpi = dpix[0];
     nanovg = NanoVGGL3.nvgCreate(NanoVGGL3.NVG_ANTIALIAS | NanoVGGL3.NVG_STENCIL_STROKES | (Util.DEBUG ? NanoVGGL3.NVG_DEBUG : 0));
-    debugFont = NanoVG.nvgCreateFont(nanovg, "Jetbrains Mono", Util.ASSET_ROOT + "/JetBrainsMono-Regular.ttf");
 
     // GLFW callbacks
     GLFW.glfwSetKeyCallback(window, (wnd, key, scancode, action, mods) -> {
@@ -65,57 +63,45 @@ public class UIWindow {
       }
     });
     GLFW.glfwSetMouseButtonCallback(window, (wnd, button, action, mods) -> {
-      if(button == GLFW.GLFW_MOUSE_BUTTON_1) {
-        mouse1 = action == GLFW.GLFW_PRESS;
+      for(int i = layers.size() - 1; i >= 0; i--) {
+        if(action == GLFW.GLFW_PRESS) {
+          layers.get(i).onMousePress(this, button + 1);
+        } else if(action == GLFW.GLFW_RELEASE) {
+          layers.get(i).onMouseRelease(this, button + 1);
+        }
       }
     });
     GLFW.glfwSetCursorPosCallback(window, (wnd, newMouseX, newMouseY) -> {
-      if(mouse1) {
-        renderer.rotateView((mouseY - newMouseY) / 5, (mouseX - newMouseX) / 5);
+      for(int i = layers.size() - 1; i >= 0; i--) {
+        layers.get(i).onMouseMove(this, newMouseX, newMouseY);
       }
-      mouseX = newMouseX;
-      mouseY = newMouseY;
     });
   }
 
-  public void setRenderer(MahjongRenderer renderer) {
-    this.renderer = renderer;
+  public void addLayer(UILayer layer) {
+    layer.initialize(this);
+    layers.add(layer);
+  }
+
+  public void replaceLayer(String id, UILayer layer) {
+    for(int i = 0; i < layers.size(); i++) {
+      if(layers.get(i).getId().equals(id)) {
+        layers.set(i, layer);
+        break;
+      }
+    }
   }
 
   public void run() {
     while(!GLFW.glfwWindowShouldClose(window)) {
       GLFW.glfwPollEvents();
-      // OpenGL rendering
-      long start = System.nanoTime();
-      GL32.glViewport(0, 0, width, height);
-      this.renderer.drawGL();
-      long end = System.nanoTime();
-      double fps = 1000000000.0d / (double)(end - start);
-
-      // NanoVG rendering
       GL.createCapabilities();
-      GL32.glEnable(GL32.GL_STENCIL_TEST);
-      GL32.glClear(GL32.GL_STENCIL_BUFFER_BIT);
-      NanoVG.nvgBeginFrame(nanovg, width, height, dpi);
-      this.renderer.drawVG(nanovg);
-      if(Util.DEBUG) {
-        NVGColor red = NVGColor.malloc().r(1.0f).g(0.0f).b(0.0f).a(1.0f);
-        NanoVG.nvgFillColor(nanovg, red);
-        NanoVG.nvgStrokeColor(nanovg, red);
-        NanoVG.nvgFontFaceId(nanovg, debugFont);
-        NanoVG.nvgFontSize(nanovg, 25);
-
-        NanoVG.nvgBeginPath(nanovg);
-        NanoVG.nvgRect(nanovg, 100, 100, 100, 100);
-        NanoVG.nvgFill(nanovg);
-        NanoVG.nvgClosePath(nanovg);
-
-        NanoVG.nvgText(nanovg, 300, 400, "FPS: %.2f".formatted(fps));
-        red.free();
+      long start = System.nanoTime();
+      for (UILayer layer : layers) {
+        layer.render(this);
       }
-      NanoVG.nnvgEndFrame(nanovg);
-
-      // GLFW
+      long end = System.nanoTime();
+      fps = 1000000000.0d / (double)(end - start);
       GLFW.glfwSwapBuffers(window);
     }
   }
@@ -126,5 +112,17 @@ public class UIWindow {
 
   public int getHeight() {
     return height;
+  }
+
+  public long getNanoVG() {
+    return nanovg;
+  }
+
+  public double getDpi() {
+    return dpi;
+  }
+
+  public double getFps() {
+    return fps;
   }
 }

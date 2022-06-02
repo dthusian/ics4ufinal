@@ -1,10 +1,10 @@
-package dev.wateralt.mc.ics4ufinal.pod;
+package dev.wateralt.mc.ics4ufinal.common;
 
 import java.util.Objects;
 
 public class MahjongTile implements Comparable<MahjongTile> {
-  private int number;
-  private char suit;
+  private final int number;
+  private final char suit;
   public static final MahjongTile NULL = new MahjongTile(8, 'z');
 
   public MahjongTile(int n, char s) {

@@ -1,24 +1,24 @@
-package dev.wateralt.mc.ics4ufinal;
+package dev.wateralt.mc.ics4ufinal.client.uilayers;
 
-import dev.wateralt.mc.ics4ufinal.exception.NativeLibraryException;
+import dev.wateralt.mc.ics4ufinal.client.MahjongClientState;
+import dev.wateralt.mc.ics4ufinal.client.Window;
+import dev.wateralt.mc.ics4ufinal.common.Util;
+import dev.wateralt.mc.ics4ufinal.common.exception.NativeLibraryException;
 import org.joml.Matrix4f;
 import org.lwjgl.opengl.GL32;
 
-import java.io.IOException;
-
 import org.joml.Vector3f;
 
-public class MahjongRenderer {
-  private static final int MAX_INST = 200;
-
+public class MahjongRenderer implements UILayer {
   MahjongClientState state;
+  double mouseX = 0.0f;
+  double mouseY = 0.0f;
+
+  // Debug only
+  float modelRotX = 0.0f;
+  float modelRotY = 0.0f;
 
   // OpenGL stuff below
-
-  // gb_* opengl buffer objects
-  // gg_* general opengl object
-  // sh_* shader program objects
-  // mt_* matrix objects
 
   int vboModel; // (x,y,z,tex_x,tex_y,draw_tex)
   int vaoModel;
@@ -26,16 +26,17 @@ public class MahjongRenderer {
   int program;
   Matrix4f matView;
   Matrix4f matProjection;
-  int gg_uniformTransformMat;
+  int uniformTransformMat;
 
-  // Debug only
-  float modelRotX = 0.0f;
-  float modelRotY = 0.0f;
 
-  public MahjongRenderer(float width, float height) throws IOException {
+  public MahjongRenderer() {
+
+  }
+
+  @Override
+  public void initialize(Window wnd) {
     matView = new Matrix4f();
-    matProjection = new Matrix4f().perspective((float) Math.toRadians(100), width/height, 0.1f, 1.0f);
-
+    matProjection = new Matrix4f().perspective((float) Math.toRadians(100), wnd.getWidth()/(float)wnd.getHeight(), 0.1f, 1.0f);
     int[] cookie = new int[1];
     GL32.glGenVertexArrays(cookie);
     vaoModel = cookie[0];
@@ -90,7 +91,7 @@ public class MahjongRenderer {
     checkProgramCompile(program);
     GL32.glDeleteShader(tsh_vertex);
     GL32.glDeleteShader(tsh_fragment);
-    gg_uniformTransformMat = GL32.glGetUniformLocation(program, "uni_transform_mat");
+    uniformTransformMat = GL32.glGetUniformLocation(program, "uni_transform_mat");
   }
 
   private static void checkShaderCompile(int shader) {
@@ -109,20 +110,28 @@ public class MahjongRenderer {
     }
   }
 
-  public void rotateView(double x, double y) {
-    //mt_view.rotateX((float) Math.toRadians(x));
-    //mt_view.rotateY((float) Math.toRadians(y));
-    modelRotX += x;
-    modelRotY += y;
+  @Override
+  public void onMouseMove(Window wnd, double newX, double newY) {
+    modelRotX += (mouseY - newY) / 5;
+    modelRotY += (mouseX - newX) / 5;
+    mouseX = newX;
+    mouseY = newY;
   }
 
   public void setClientState(MahjongClientState state) {
     this.state = state;
   }
 
-  public void drawGL() {
+  @Override
+  public String getId() {
+    // Assume only 1 renderer can be active at once
+    return "MahjongRenderer";
+  }
+
+  public void render(Window wnd) {
     GL32.glEnable(GL32.GL_DEPTH_TEST);
     GL32.glDisable(GL32.GL_STENCIL_TEST);
+    GL32.glViewport(0, 0, wnd.getWidth(), wnd.getHeight());
     GL32.glClearColor(0.0f, 0.8f, 0.2f, 0.0f);
     GL32.glClear(GL32.GL_COLOR_BUFFER_BIT | GL32.GL_DEPTH_BUFFER_BIT);
 
@@ -139,10 +148,8 @@ public class MahjongRenderer {
     tmt_model.get(buf);
     GL32.glBindVertexArray(vaoModel);
     GL32.glUseProgram(program);
-    GL32.glUniformMatrix4fv(gg_uniformTransformMat, false, buf);
+    GL32.glUniformMatrix4fv(uniformTransformMat, false, buf);
     GL32.glBindBuffer(GL32.GL_ELEMENT_ARRAY_BUFFER, eboModel);
     GL32.glDrawElements(GL32.GL_TRIANGLES, 36, GL32.GL_UNSIGNED_INT, 0);
   }
-
-  public void drawVG(long nanovg) { }
 }
