@@ -28,10 +28,13 @@ public class UIWindow {
     videoMode = GLFW.glfwGetVideoMode(GLFW.glfwGetPrimaryMonitor());
     if(videoMode == null) throw new NativeLibraryException("Failed to query monitor size");
     GLFW.glfwWindowHint(GLFW.GLFW_RESIZABLE, GLFW.GLFW_FALSE);
+    GLFW.glfwWindowHint(GLFW.GLFW_OPENGL_PROFILE, GLFW.GLFW_OPENGL_CORE_PROFILE);
+    GLFW.glfwWindowHint(GLFW.GLFW_CONTEXT_VERSION_MAJOR, 3);
+    GLFW.glfwWindowHint(GLFW.GLFW_CONTEXT_VERSION_MINOR, 2);
     window = GLFW.glfwCreateWindow(videoMode.width(), videoMode.height(), title, GLFW.glfwGetPrimaryMonitor(), 0);
     if(window == 0) throw new NativeLibraryException("Failed to create window");
     GLFW.glfwMakeContextCurrent(window);
-    GLFW.glfwSwapInterval(1);
+    GLFW.glfwSwapInterval(0);
 
     // NanoVG
     GL.createCapabilities();
@@ -47,6 +50,13 @@ public class UIWindow {
     dpi = dpix[0];
     nanovg = NanoVGGL3.nvgCreate(NanoVGGL3.NVG_ANTIALIAS | NanoVGGL3.NVG_STENCIL_STROKES | (Util.DEBUG ? NanoVGGL3.NVG_DEBUG : 0));
     debugFont = NanoVG.nvgCreateFont(nanovg, "Jetbrains Mono", Util.ASSET_ROOT + "/JetBrainsMono-Regular.ttf");
+
+    // GLFW callbacks
+    GLFW.glfwSetKeyCallback(window, (wnd, key, scancode, action, mods) -> {
+      if(key == GLFW.GLFW_KEY_ESCAPE) {
+        GLFW.glfwSetWindowShouldClose(wnd, true);
+      }
+    });
   }
 
   public void setRenderer(MahjongRenderer renderer) {
@@ -55,11 +65,10 @@ public class UIWindow {
 
   public void run() {
     while(!GLFW.glfwWindowShouldClose(window)) {
+      GLFW.glfwPollEvents();
       // OpenGL rendering
       long start = System.nanoTime();
-      GL32.glEnable(GL32.GL_DEPTH_TEST);
-      GL32.glClearColor(0.0f, 1.0f, 1.0f, 0.0f);
-      GL32.glClear(GL32.GL_COLOR_BUFFER_BIT | GL32.GL_DEPTH_BUFFER_BIT | GL32.GL_STENCIL_BUFFER_BIT);
+      GL32.glViewport(0, 0, width, height);
       this.renderer.drawGL();
       long end = System.nanoTime();
       double fps = 1000000000.0d / (double)(end - start);
@@ -82,10 +91,7 @@ public class UIWindow {
         NanoVG.nvgFill(nanovg);
         NanoVG.nvgClosePath(nanovg);
 
-        NanoVG.nvgBeginPath(nanovg);
         NanoVG.nvgText(nanovg, 300, 400, "FPS: %.2f".formatted(fps));
-        NanoVG.nvgStroke(nanovg);
-        NanoVG.nvgClosePath(nanovg);
         red.free();
       }
       NanoVG.nnvgEndFrame(nanovg);
@@ -93,5 +99,13 @@ public class UIWindow {
       // GLFW
       GLFW.glfwSwapBuffers(window);
     }
+  }
+
+  public int getWidth() {
+    return width;
+  }
+
+  public int getHeight() {
+    return height;
   }
 }

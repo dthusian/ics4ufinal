@@ -6,6 +6,7 @@ plugins {
 import org.gradle.internal.os.OperatingSystem
 
 project.ext.lwjglVersion = "3.3.1"
+project.ext.jomlVersion = "1.10.4"
 
 switch (OperatingSystem.current()) {
     case OperatingSystem.LINUX:
@@ -21,6 +22,9 @@ version '1.0-SNAPSHOT'
 
 repositories {
     mavenCentral()
+    flatDir {
+        dirs "lib"
+    }
 }
 
 dependencies {
@@ -41,6 +45,7 @@ dependencies {
     runtimeOnly "org.lwjgl:lwjgl-opengl::$lwjglNatives"
     runtimeOnly "org.lwjgl:lwjgl-opus::$lwjglNatives"
     runtimeOnly "org.lwjgl:lwjgl-stb::$lwjglNatives"
+    implementation "org.joml:joml:${jomlVersion}"
 }
 
 test {
@@ -48,4 +53,17 @@ test {
 
 application {
     mainClass = "dev.wateralt.mc.ics4ufinal.Main"
+}
+
+jar {
+    jar {
+        manifest {
+            attributes 'Main-Class': 'dev.wateralt.mc.ics4ufinal.Main'
+        }
+
+        configurations.runtimeClasspath.each {
+            from(project.zipTree(it))
+            duplicatesStrategy(DuplicatesStrategy.EXCLUDE)
+        }
+    }
 }
