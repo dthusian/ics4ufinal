@@ -21,7 +21,11 @@ public class UIWindow {
   float dpi;
   int debugFont;
 
+  double mouseX, mouseY;
+
   public UIWindow(String title) {
+    mouseX = 0;
+    mouseY = 0;
     // GLFW
     GLFWErrorCallback.createPrint().set();
     if(!GLFW.glfwInit()) throw new NativeLibraryException("GLFW.glfwInit failed");
@@ -56,6 +60,11 @@ public class UIWindow {
       if(key == GLFW.GLFW_KEY_ESCAPE) {
         GLFW.glfwSetWindowShouldClose(wnd, true);
       }
+    });
+    GLFW.glfwSetCursorPosCallback(window, (wnd, newMouseX, newMouseY) -> {
+      renderer.rotateView((newMouseY - mouseY) / 5, (newMouseX - mouseX) / 5);
+      mouseX = newMouseX;
+      mouseY = newMouseY;
     });
   }
 

@@ -61,7 +61,7 @@ public class MahjongRenderer {
     GL32.glBindBuffer(GL32.GL_ELEMENT_ARRAY_BUFFER, gb_model_idx);
     int[] model_indices = {
         0, 1, 2, 3, 2, 1,
-        2, 1, 0, 1, 2, 3,
+        //2, 1, 0, 1, 2, 3,
         //6, 5, 4, 5, 6, 7,
         //4, 0, 1, 1, 5, 4
     };
@@ -133,6 +133,11 @@ public class MahjongRenderer {
     }
   }
 
+  public void rotateView(double x, double y) {
+    mt_view.rotateX((float) Math.toRadians(x));
+    mt_view.rotateY((float) Math.toRadians(y));
+  }
+
   /*
   Normal rendering:
 
@@ -166,7 +171,7 @@ public class MahjongRenderer {
     GL32.glUniformMatrix4fv(gg_uniformTransformMatTex, false, buf);
     GL32.glUniformMatrix4fv(gg_uniformTransformMatColor, false, buf);
     GL32.glBindBuffer(GL32.GL_ELEMENT_ARRAY_BUFFER, gb_model_idx);
-    GL32.glDrawElements(GL32.GL_TRIANGLES, 12, GL32.GL_UNSIGNED_INT, 0);
+    GL32.glDrawElements(GL32.GL_TRIANGLES, 6, GL32.GL_UNSIGNED_INT, 0);
   }
 
   public void drawVG(long nanovg) { }
