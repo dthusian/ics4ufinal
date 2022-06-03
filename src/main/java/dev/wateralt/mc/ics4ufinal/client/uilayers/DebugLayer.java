@@ -6,6 +6,10 @@ import org.lwjgl.nanovg.NVGColor;
 import org.lwjgl.nanovg.NanoVG;
 import org.lwjgl.opengl.GL32;
 
+import java.time.Instant;
+import java.time.temporal.TemporalField;
+import java.util.Date;
+
 public class DebugLayer implements UILayer {
   private static class DebugPrinter {
     int posY = 25;
@@ -22,6 +26,7 @@ public class DebugLayer implements UILayer {
   int debugFont;
 
   // Debug info
+  int lastUpdatedSecond;
   String osName;
   String osArch;
   String glVendorName;
@@ -29,9 +34,13 @@ public class DebugLayer implements UILayer {
   String glVersion;
   String javaVersion;
   String javaVendor;
+  long memUsed;
+  long memAllocated;
+  long memMax;
 
   public DebugLayer() {
     debugFont = 0;
+    lastUpdatedSecond = -1;
     osName = System.getProperty("os.name");
     osArch = System.getProperty("os.arch");
     javaVersion = System.getProperty("java.version");
@@ -51,30 +60,43 @@ public class DebugLayer implements UILayer {
     return "DebugLayer";
   }
 
+  public void updateInfo() {
+    int currentSecond = Date.from(Instant.now()).getSeconds();
+    if(lastUpdatedSecond != currentSecond) {
+      lastUpdatedSecond = currentSecond;
+      memUsed = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory();
+      memAllocated = Runtime.getRuntime().totalMemory();
+      memMax = Runtime.getRuntime().maxMemory();
+    }
+  }
+
   @Override
   public void render(Window wnd) {
+    updateInfo();
+
     GL32.glEnable(GL32.GL_STENCIL_TEST);
     GL32.glClear(GL32.GL_STENCIL_BUFFER_BIT);
     long nanovg = wnd.getNanoVG();
     NanoVG.nvgBeginFrame(nanovg, (float) wnd.getWidth(), (float) wnd.getHeight(), (float) wnd.getDpi());
-    if(Util.DEBUG) {
-      NVGColor red = NVGColor.malloc().r(1.0f).g(0.0f).b(0.0f).a(1.0f);
-      NanoVG.nvgFillColor(nanovg, red);
-      NanoVG.nvgStrokeColor(nanovg, red);
-      NanoVG.nvgFontFaceId(nanovg, debugFont);
-      NanoVG.nvgFontSize(nanovg, 25);
 
-      DebugPrinter pr = new DebugPrinter(nanovg);
-      pr.print("CS Mahjong Debug Screen - (C) Adrian Wu");
-      pr.print("OS: %s %s", osName, osArch);
-      pr.print("Java: %s %s", javaVendor, javaVersion);
-      pr.print("OpenGL Version: %s", glVersion);
-      pr.print("OpenGL Vendor: %s", glVendorName);
-      pr.print("OpenGL Renderer: %s", glRendererName);
-      pr.print("FPS: %.2f", wnd.getFps());
+    NVGColor red = NVGColor.malloc().r(1.0f).g(0.0f).b(0.0f).a(1.0f);
+    NanoVG.nvgFillColor(nanovg, red);
+    NanoVG.nvgStrokeColor(nanovg, red);
+    NanoVG.nvgFontFaceId(nanovg, debugFont);
+    NanoVG.nvgFontSize(nanovg, 25);
 
-      red.free();
-    }
+    DebugPrinter pr = new DebugPrinter(nanovg);
+    pr.print("CS Mahjong Debug");
+    pr.print("OS: %s %s", osName, osArch);
+    pr.print("Java: %s %s", javaVendor, javaVersion);
+    pr.print("OpenGL Version: %s", glVersion);
+    pr.print("OpenGL Vendor: %s", glVendorName);
+    pr.print("OpenGL Renderer: %s", glRendererName);
+    pr.print("FPS: %.2f", wnd.getFps());
+    pr.print("Memory: %dM used / %dM alloc / %dM max", memUsed / 1000000, memAllocated / 1000000, memMax / 1000000);
+
+    red.free();
+
     NanoVG.nnvgEndFrame(nanovg);
   }
 }
