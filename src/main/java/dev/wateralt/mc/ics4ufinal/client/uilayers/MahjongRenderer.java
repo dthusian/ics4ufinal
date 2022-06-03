@@ -128,6 +128,7 @@ public class MahjongRenderer implements UILayer {
     return "MahjongRenderer";
   }
 
+  @Override
   public void render(Window wnd) {
     GL32.glEnable(GL32.GL_DEPTH_TEST);
     GL32.glDisable(GL32.GL_STENCIL_TEST);
@@ -151,5 +152,12 @@ public class MahjongRenderer implements UILayer {
     GL32.glUniformMatrix4fv(uniformTransformMat, false, buf);
     GL32.glBindBuffer(GL32.GL_ELEMENT_ARRAY_BUFFER, eboModel);
     GL32.glDrawElements(GL32.GL_TRIANGLES, 36, GL32.GL_UNSIGNED_INT, 0);
+  }
+
+  @Override
+  public void close() {
+    GL32.glDeleteProgram(program);
+    GL32.glDeleteBuffers(new int[] { vboModel, eboModel });
+    GL32.glDeleteVertexArrays(vaoModel);
   }
 }

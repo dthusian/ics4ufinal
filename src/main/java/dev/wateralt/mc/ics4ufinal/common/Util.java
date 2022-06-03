@@ -2,6 +2,7 @@ package dev.wateralt.mc.ics4ufinal.common;
 
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.Random;
 
@@ -21,5 +22,12 @@ public class Util {
     } catch(IOException err) {
       throw new RuntimeException(err);
     }
+  }
+
+  public static String byteBufReadString(ByteBuffer buf, int idx) {
+    int length = buf.getInt(idx);
+    byte[] strBuf = new byte[length];
+    buf.get(strBuf, idx + 4, length);
+    return new String(strBuf);
   }
 }

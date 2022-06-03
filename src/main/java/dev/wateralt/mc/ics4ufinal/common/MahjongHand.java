@@ -8,15 +8,21 @@ public class MahjongHand {
   // I dislike LinkedList for personal reasons.
   // Traversing a LinkedList might be slower because it plays worse with CPU caching (because non-locality)
 
-  ArrayList<MahjongTile> hidden;
-  ArrayList<MahjongTile> hiddenKan;
-  ArrayList<MahjongTile> shown;
-  MahjongTile finalTile;
+  private final ArrayList<MahjongTile> hidden;
+  private final ArrayList<MahjongTile> hiddenKan;
+  private final ArrayList<MahjongTile> shown;
+  private MahjongTile finalTile;
 
   public MahjongHand(ArrayList<MahjongTile> initial) {
     hidden = initial;
     hiddenKan = new ArrayList<>();
     shown = new ArrayList<>();
+    finalTile = MahjongTile.NULL;
+  }
+
+  public void clear() {
+    hidden.clear();
+    hiddenKan.clear();
     finalTile = MahjongTile.NULL;
   }
 
@@ -38,6 +44,9 @@ public class MahjongHand {
 
   public void setFinalTile(MahjongTile finalTile) {
     this.finalTile = finalTile;
+  }
+  public int getLength() {
+    return hidden.size() + hiddenKan.size() + shown.size() + (finalTile == null ? 0 : 1);
   }
 
   @Override

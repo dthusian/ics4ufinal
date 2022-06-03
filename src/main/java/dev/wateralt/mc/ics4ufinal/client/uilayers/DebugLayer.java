@@ -7,7 +7,6 @@ import org.lwjgl.nanovg.NanoVG;
 import org.lwjgl.opengl.GL32;
 
 import java.time.Instant;
-import java.time.temporal.TemporalField;
 import java.util.Date;
 
 public class DebugLayer implements UILayer {
@@ -37,6 +36,7 @@ public class DebugLayer implements UILayer {
   long memUsed;
   long memAllocated;
   long memMax;
+  double fps;
 
   public DebugLayer() {
     debugFont = 0;
@@ -60,19 +60,20 @@ public class DebugLayer implements UILayer {
     return "DebugLayer";
   }
 
-  public void updateInfo() {
+  public void updateInfo(Window wnd) {
     int currentSecond = Date.from(Instant.now()).getSeconds();
     if(lastUpdatedSecond != currentSecond) {
       lastUpdatedSecond = currentSecond;
       memUsed = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory();
       memAllocated = Runtime.getRuntime().totalMemory();
       memMax = Runtime.getRuntime().maxMemory();
+      fps = wnd.getFps();
     }
   }
 
   @Override
   public void render(Window wnd) {
-    updateInfo();
+    updateInfo(wnd);
 
     GL32.glEnable(GL32.GL_STENCIL_TEST);
     GL32.glClear(GL32.GL_STENCIL_BUFFER_BIT);
@@ -92,7 +93,7 @@ public class DebugLayer implements UILayer {
     pr.print("OpenGL Version: %s", glVersion);
     pr.print("OpenGL Vendor: %s", glVendorName);
     pr.print("OpenGL Renderer: %s", glRendererName);
-    pr.print("FPS: %.2f", wnd.getFps());
+    pr.print("FPS: %.2f", fps);
     pr.print("Memory: %dM used / %dM alloc / %dM max", memUsed / 1000000, memAllocated / 1000000, memMax / 1000000);
 
     red.free();

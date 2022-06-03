@@ -8,6 +8,6 @@ only sends updates to the game state, so clients must maintain
 their own local copy of the game state.
 
 This is accomplished through the MahjongClientState class, which
-tracks the all the game state that the client knows. This class
-is also passed to the MahjongRenderer class to render, because
-the renderer only knows what the client knows anyway.
+tracks the all the game state that the client knows. In order to 
+power animations, the client stub also updates the AnimationManager
+class, which track tile model orientations and animations.

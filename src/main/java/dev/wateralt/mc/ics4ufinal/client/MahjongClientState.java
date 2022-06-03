@@ -1,15 +1,14 @@
 package dev.wateralt.mc.ics4ufinal.client;
 
+import dev.wateralt.mc.ics4ufinal.common.MahjongHand;
 import dev.wateralt.mc.ics4ufinal.common.MahjongTile;
 
 import java.util.ArrayList;
 
 public class MahjongClientState {
-  private ArrayList<ArrayList<MahjongTile>> opponentHands;
+  private MahjongHand[] playerHands;
 
-  private ArrayList<MahjongTile> yourHand;
-
-  public ArrayList<ArrayList<MahjongTile>> getOpponentHands() {
-    return opponentHands;
+  public MahjongHand[] getPlayerHands() {
+    return playerHands;
   }
 }

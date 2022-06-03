@@ -4,26 +4,42 @@ import java.util.Objects;
 
 public class MahjongTile implements Comparable<MahjongTile> {
   private final int number;
-  private final char suit;
   public static final MahjongTile NULL = new MahjongTile(8, 'z');
 
   public MahjongTile(int n, char s) {
-    if(s != 'm' && s != 'p' && s != 's' && s != 'z') {
-      throw new IllegalArgumentException("Suit invalid");
-    }
     if(n > 9 || n < 1) {
-      throw new IllegalArgumentException("Number out of range");
+      throw new IllegalArgumentException("Invalid tile");
     }
-    number = n;
-    suit = s;
+    if(s == 'm') {
+      number = n;
+    } else if(s == 'p') {
+      number = 10 + n;
+    } else if(s == 's') {
+      number = 20 + n;
+    } else if(s == 'z') {
+      number = 30 + n;
+    } else {
+      throw new RuntimeException();
+    }
+  }
+
+  public MahjongTile(int id) {
+    if(id <= 0 || id == 10 || id == 20 || id == 30 || id == 40 || id >= 49) {
+      throw new IllegalArgumentException("Invalid tile");
+    }
+    number = id;
   }
 
   public int getNumber() {
-    return number;
+    return number % 10;
   }
 
   public char getSuit() {
-    return suit;
+    return "mpsz".charAt(number / 10);
+  }
+
+  public int getInternal() {
+    return number;
   }
 
   @Override
@@ -31,20 +47,16 @@ public class MahjongTile implements Comparable<MahjongTile> {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
     MahjongTile that = (MahjongTile) o;
-    return number == that.number && suit == that.suit;
+    return number == that.number;
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(number, suit);
+    return Objects.hash(number);
   }
 
   @Override
   public int compareTo(MahjongTile o) {
-    int cmp = Character.compare(this.suit, o.suit);
-    if(cmp == 0) {
-      return Integer.compare(this.number, o.number);
-    }
-    return cmp;
+    return Integer.compare(this.getInternal(), o.getInternal());
   }
 }

@@ -13,4 +13,5 @@ public interface UILayer {
   default boolean onMouseRelease(Window wnd, int button) {
     return true;
   }
+  default void close() { }
 }

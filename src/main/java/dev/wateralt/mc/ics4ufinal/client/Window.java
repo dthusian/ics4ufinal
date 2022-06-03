@@ -2,18 +2,14 @@
 
 package dev.wateralt.mc.ics4ufinal.client;
 
-import dev.wateralt.mc.ics4ufinal.client.uilayers.MahjongRenderer;
 import dev.wateralt.mc.ics4ufinal.client.uilayers.UILayer;
 import dev.wateralt.mc.ics4ufinal.common.Util;
 import dev.wateralt.mc.ics4ufinal.common.exception.NativeLibraryException;
 import org.lwjgl.glfw.GLFW;
 import org.lwjgl.glfw.GLFWErrorCallback;
 import org.lwjgl.glfw.GLFWVidMode;
-import org.lwjgl.nanovg.NVGColor;
-import org.lwjgl.nanovg.NanoVG;
 import org.lwjgl.nanovg.NanoVGGL3;
 import org.lwjgl.opengl.GL;
-import org.lwjgl.opengl.GL32;
 
 import java.util.ArrayList;
 
