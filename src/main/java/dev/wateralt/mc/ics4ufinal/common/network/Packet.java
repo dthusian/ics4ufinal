@@ -15,8 +15,9 @@ bytes -> Packet data
 
 Packet types:
 1xx: Connection negotiation and game setup
-2xx: Normal gameplay
-3xx: Errors and disconnections
+2xx: Normal gameplay, S->C
+3xx: Normal gameplay, C->S and S->C
+4xx: Errors and disconnections
 */
 
 public interface Packet {

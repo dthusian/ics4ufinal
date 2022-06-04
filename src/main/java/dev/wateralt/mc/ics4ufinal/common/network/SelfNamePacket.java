@@ -6,6 +6,7 @@ import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 
 public class SelfNamePacket implements Packet {
+  public static final int ID = 100;
   String name;
 
   public SelfNamePacket() {
@@ -14,7 +15,7 @@ public class SelfNamePacket implements Packet {
 
   @Override
   public int getId() {
-    return 100;
+    return ID;
   }
 
   @Override

@@ -7,7 +7,7 @@ import org.lwjgl.nanovg.NanoVG;
 import org.lwjgl.opengl.GL32;
 
 import java.time.Instant;
-import java.util.Date;
+import java.time.temporal.ChronoField;
 
 public class DebugLayer implements UILayer {
   private static class DebugPrinter {
@@ -25,7 +25,7 @@ public class DebugLayer implements UILayer {
   int debugFont;
 
   // Debug info
-  int lastUpdatedSecond;
+  long lastUpdated100ms;
   String osName;
   String osArch;
   String glVendorName;
@@ -40,7 +40,7 @@ public class DebugLayer implements UILayer {
 
   public DebugLayer() {
     debugFont = 0;
-    lastUpdatedSecond = -1;
+    lastUpdated100ms = -1;
     osName = System.getProperty("os.name");
     osArch = System.getProperty("os.arch");
     javaVersion = System.getProperty("java.version");
@@ -61,9 +61,9 @@ public class DebugLayer implements UILayer {
   }
 
   public void updateInfo(Window wnd) {
-    int currentSecond = Date.from(Instant.now()).getSeconds();
-    if(lastUpdatedSecond != currentSecond) {
-      lastUpdatedSecond = currentSecond;
+    long current100ms = Instant.now().getLong(ChronoField.MILLI_OF_SECOND) / 100;
+    if(lastUpdated100ms != current100ms) {
+      lastUpdated100ms = current100ms;
       memUsed = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory();
       memAllocated = Runtime.getRuntime().totalMemory();
       memMax = Runtime.getRuntime().maxMemory();
