@@ -4,14 +4,16 @@ import dev.wateralt.mc.ics4ufinal.common.MahjongHand;
 import dev.wateralt.mc.ics4ufinal.common.MahjongTile;
 import dev.wateralt.mc.ics4ufinal.common.network.DiscardTilePacket;
 import dev.wateralt.mc.ics4ufinal.common.network.GainTilePacket;
+import dev.wateralt.mc.ics4ufinal.common.network.NoActionPacket;
 import dev.wateralt.mc.ics4ufinal.common.network.Packet;
 import dev.wateralt.mc.ics4ufinal.server.controllers.Controller;
+import dev.wateralt.mc.ics4ufinal.server.controllers.NullController;
 
 import java.time.Instant;
 import java.util.*;
 
 public class MahjongGame {
-  public class PlayerState {
+  public static class PlayerState {
     private Controller controller;
     private MahjongHand hand;
     private ArrayList<MahjongTile> discardPile;
@@ -74,8 +76,8 @@ public class MahjongGame {
     boolean inserted = false;
     for(int i = 0; i < players.length; i++) {
       if(players[i] == null) {
-        players[i] = new PlayerState(ctl, null, new ArrayList<>(), "Player " + (i + 1));
-        players[i].controller.initialize(players[i]);
+        players[i] = new PlayerState(ctl, new MahjongHand(), new ArrayList<>(), "Player " + (i + 1));
+        players[i].controller.initialize(this, i);
         inserted = true;
         break;
       }
@@ -94,8 +96,8 @@ public class MahjongGame {
   }
 
   public void checkStartConditions() {
-    for(int i = 0; i < players.length; i++) {
-      if(players[i] == null) {
+    for (PlayerState player : players) {
+      if (player == null) {
         throw new IllegalStateException("Cannot start without 4 players");
       }
     }
@@ -121,17 +123,17 @@ public class MahjongGame {
       int idx = rand.nextInt(genTiles.size());
       deck.add(genTiles.remove(idx));
     }
-    for(int i = 0; i < players.length; i++) {
-      players[i].hand.clear();
-      for(int j = 0; j < 13; j++) {
-        players[i].hand.getHidden().add(deck.remove());
+    for (PlayerState player : players) {
+      player.hand.clear();
+      for (int j = 0; j < 13; j++) {
+        player.hand.getHidden().add(deck.remove());
       }
     }
   }
 
   private void broadcast(Packet p) {
-    for(int i = 0; i < players.length; i++) {
-      players[i].controller.send(p);
+    for (PlayerState player : players) {
+      player.controller.send(p);
     }
   }
 
@@ -149,6 +151,11 @@ public class MahjongGame {
     players[player].controller.send(p);
   }
 
+  // Player did something bad and is being un-alived
+  private void unalivePlayer(PlayerState pl) {
+    pl.controller = new NullController();
+  }
+
   public void runGame() {
     checkStartConditions();
     Instant timeSeed = Instant.now();
@@ -162,23 +169,50 @@ public class MahjongGame {
 
     int currentPlayerTurn = dealer;
     while(true) {
+      PlayerState current = players[currentPlayerTurn];
       // Deal
       MahjongTile newTile = deck.remove();
-      players[currentPlayerTurn].hand.getHidden().add(newTile);
-      broadcastExcept(new GainTilePacket(MahjongTile.NULL, currentPlayerTurn), currentPlayerTurn, new GainTilePacket(newTile, currentPlayerTurn));
+      synchronized (current) {
+        current.hand.getHidden().add(newTile);
+        broadcastExcept(new GainTilePacket(MahjongTile.NULL, currentPlayerTurn), currentPlayerTurn, new GainTilePacket(newTile, currentPlayerTurn));
+      }
 
-      // Deal with packets
-      while(true) {
-        Packet recved = players[currentPlayerTurn].controller.receive(500);
-        if (recved.getId() == DiscardTilePacket.ID) {
-
+      // Recieve main player action
+      Packet p = current.controller.receive(10000);
+      synchronized (current) {
+        if (p.getId() == DiscardTilePacket.ID) {
+          DiscardTilePacket pDerived = (DiscardTilePacket)p;
+          int index = current.hand.getHidden().indexOf(((DiscardTilePacket)p).getTile());
+          if(index == -1 || pDerived.getPlayer() != currentPlayerTurn) {
+            unalivePlayer(current);
+            continue;
+          }
+          current.hand.getHidden().remove(index);
+          broadcast(p);
+        } else {
+          unalivePlayer(current);
+          continue;
         }
+      }
+
+      // Receive other player's reactions
+      // Dealer gets priority on move, didn't want the order to be unspecified
+      for(int i = 0, pl = dealer; i < 4; i++, pl = (pl + 1) % 4) {
+        PlayerState considerPlayer = players[pl];
+        Packet p2 = considerPlayer.controller.receive(10000);
+        if(p2.getId() == NoActionPacket.ID) {
+          continue;
+        } //TODO impl ronnya
       }
 
       // Next player turn
       currentPlayerTurn++;
       currentPlayerTurn %= 4;
     }
+  }
+
+  public PlayerState getPlayer(int id) {
+    return players[id];
   }
 
 }

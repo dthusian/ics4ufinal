@@ -1,5 +1,6 @@
 package dev.wateralt.mc.ics4ufinal.server.controllers;
 
+import dev.wateralt.mc.ics4ufinal.common.Util;
 import dev.wateralt.mc.ics4ufinal.common.network.Packet;
 import dev.wateralt.mc.ics4ufinal.common.network.SelfNamePacket;
 import dev.wateralt.mc.ics4ufinal.server.MahjongGame;
@@ -26,32 +27,29 @@ public class NetworkPlayerController implements Controller {
   private void threadMain() {
     while(true) {
       try {
-        ByteBuffer lengthBuf = ByteBuffer.allocate(4);
-        int read = sock.getInputStream().read(lengthBuf.array(), 0, 4);
-        if(read != 4) throw new IOException();
-        int length = lengthBuf.getInt(0);
-        ByteBuffer buf = ByteBuffer.allocate(length + 8);
-        buf.putInt(read);
-        read = sock.getInputStream().read(buf.array(), 4, length + 4);
-        if(read != length + 4) throw new IOException();
-        Packet p = Packet.deserialize(buf);
-        if(p == null) {
-        } else if(p.getId() == SelfNamePacket.ID) {
-          synchronized (playerState) {
-            playerState.setName(((SelfNamePacket)p).getName());
-          }
-        } else {
-          turnsPacketQueue.add(p);
-        }
+        Packet p = Packet.deserialize(Util.readSinglePacket(sock.getInputStream()));
+        handlePacket(p);
       } catch(IOException ignored) {
         break;
       }
     }
   }
 
+  private void handlePacket(Packet p) throws IOException {
+    if(p == null) {
+      throw new IOException();
+    } else if(p.getId() == SelfNamePacket.ID) {
+      synchronized (playerState) {
+        playerState.setName(((SelfNamePacket)p).getName());
+      }
+    } else {
+      turnsPacketQueue.add(p);
+    }
+  }
+
   @Override
-  public void initialize(MahjongGame.PlayerState state) {
-    playerState = state;
+  public void initialize(MahjongGame state, int playerId) {
+    playerState = state.getPlayer(playerId);
   }
 
   @Override
@@ -59,14 +57,24 @@ public class NetworkPlayerController implements Controller {
     try {
       sock.getOutputStream().write(Packet.serialize(packet).array());
     } catch(IOException ignored) {
-      // Assume sends are infalliable (reads will fail anyway if the connection is down)
+      // Assume sends are infallible (reads will fail anyway if the connection is down)
     }
   }
 
   @Override
   public Packet receive(int timeout) {
-    synchronized (turnsPacketQueue) {
-      return turnsPacketQueue.remove();
+    try {
+      for(int i = 0; i < 10; i++) {
+        Packet p;
+        synchronized (turnsPacketQueue) {
+          p = turnsPacketQueue.poll();
+        }
+        if(p != null) return p;
+        Thread.sleep(timeout / 10);
+      }
+    } catch (InterruptedException ignored) {
     }
+    // TODO Return default
+    throw new UnsupportedOperationException();
   }
 }

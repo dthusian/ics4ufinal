@@ -20,12 +20,12 @@ Packet types:
 4xx: Errors and disconnections
 */
 
-public interface Packet {
-  int getId();
-  ByteBuffer serializeInternal();
-  void deserializeInternal(ByteBuffer buf);
+public abstract class Packet {
+  public abstract int getId();
+  protected abstract ByteBuffer serializeInternal();
+  protected abstract void deserializeInternal(ByteBuffer buf);
 
-  static ByteBuffer serialize(Packet p) {
+  public static ByteBuffer serialize(Packet p) {
     ByteBuffer noHeader = p.serializeInternal();
     ByteBuffer newBuf = ByteBuffer.allocate(noHeader.capacity() + 8);
     newBuf.putInt(noHeader.capacity());
@@ -34,7 +34,7 @@ public interface Packet {
     return newBuf;
   }
 
-  static Packet deserialize(ByteBuffer bytes) {
+  public static Packet deserialize(ByteBuffer bytes) {
     bytes.order(ByteOrder.BIG_ENDIAN);
     int length = bytes.getInt(0);
     int type = bytes.getInt(4);
@@ -42,9 +42,20 @@ public interface Packet {
       throw new RuntimeException("Length mismatch; possibly truncated buffer");
     }
     Packet p;
-    if(type == new SelfNamePacket().getId()) {
+    // No better way to do this without reflection
+    // And I don't want to use reflection
+    if(type == SelfNamePacket.ID) {
       p = new SelfNamePacket();
       p.deserializeInternal(bytes.slice(8, length));
+    } else if(type == GainTilePacket.ID) {
+      p = new GainTilePacket();
+      p.deserializeInternal(bytes.slice(8, length));
+    } else if(type == DiscardTilePacket.ID) {
+      p = new DiscardTilePacket();
+      p.deserializeInternal(bytes.slice(8, length));
+    } else if(type == NoActionPacket.ID) {
+      p = new NoActionPacket();
+      p.deserializeInternal(bytes.slice(8, length)); // This LOC is the most useless one in the codebase
     } else {
       return null;
     }

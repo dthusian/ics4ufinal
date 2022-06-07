@@ -13,8 +13,8 @@ public class MahjongHand {
   private final ArrayList<MahjongTile> shown;
   private MahjongTile finalTile;
 
-  public MahjongHand(ArrayList<MahjongTile> initial) {
-    hidden = initial;
+  public MahjongHand() {
+    hidden = new ArrayList<>();
     hiddenKan = new ArrayList<>();
     shown = new ArrayList<>();
     finalTile = MahjongTile.NULL;

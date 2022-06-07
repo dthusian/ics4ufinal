@@ -4,7 +4,7 @@ import dev.wateralt.mc.ics4ufinal.common.MahjongTile;
 
 import java.nio.ByteBuffer;
 
-public abstract class BasicTilePacket implements Packet {
+public abstract class BasicTilePacket extends Packet {
   MahjongTile tile;
   int player;
 
@@ -38,5 +38,13 @@ public abstract class BasicTilePacket implements Packet {
 
   public void setTile(MahjongTile tile) {
     this.tile = tile;
+  }
+
+  public int getPlayer() {
+    return player;
+  }
+
+  public void setPlayer(int player) {
+    this.player = player;
   }
 }

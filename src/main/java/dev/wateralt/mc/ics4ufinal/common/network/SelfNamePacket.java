@@ -5,7 +5,7 @@ import dev.wateralt.mc.ics4ufinal.common.Util;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 
-public class SelfNamePacket implements Packet {
+public class SelfNamePacket extends Packet {
   public static final int ID = 100;
   String name;
 

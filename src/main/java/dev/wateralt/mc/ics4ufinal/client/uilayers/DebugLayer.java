@@ -1,6 +1,7 @@
 package dev.wateralt.mc.ics4ufinal.client.uilayers;
 
 import dev.wateralt.mc.ics4ufinal.client.Window;
+import dev.wateralt.mc.ics4ufinal.common.Logger;
 import dev.wateralt.mc.ics4ufinal.common.Util;
 import org.lwjgl.nanovg.NVGColor;
 import org.lwjgl.nanovg.NanoVG;
@@ -53,6 +54,7 @@ public class DebugLayer implements UILayer {
     glVendorName = GL32.glGetString(GL32.GL_VENDOR);
     glRendererName = GL32.glGetString(GL32.GL_RENDERER);
     glVersion = GL32.glGetString(GL32.GL_VERSION);
+    (new Logger(this)).info("Debug layer enabled");
   }
 
   @Override

@@ -3,6 +3,7 @@
 package dev.wateralt.mc.ics4ufinal.client;
 
 import dev.wateralt.mc.ics4ufinal.client.uilayers.UILayer;
+import dev.wateralt.mc.ics4ufinal.common.Logger;
 import dev.wateralt.mc.ics4ufinal.common.Util;
 import dev.wateralt.mc.ics4ufinal.common.exception.NativeLibraryException;
 import org.lwjgl.glfw.GLFW;
@@ -21,11 +22,16 @@ public class Window {
   long nanovg;
   ArrayList<UILayer> layers;
   double fps;
+  Logger logs;
 
   public Window(String title) {
     layers = new ArrayList<>();
+    logs = new Logger(this);
     // GLFW
-    GLFWErrorCallback.createPrint().set();
+    GLFW.glfwSetErrorCallback((err, descriptionId) -> {
+      String errStr = GLFWErrorCallback.getDescription(descriptionId);
+      logs.err("GLFW Error %d: %s", err, errStr);
+    });
     if(!GLFW.glfwInit()) throw new NativeLibraryException("GLFW.glfwInit failed");
     GLFWVidMode videoMode = GLFW.glfwGetVideoMode(GLFW.glfwGetPrimaryMonitor());
     if(videoMode == null) throw new NativeLibraryException("Failed to query monitor size");
