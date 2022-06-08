@@ -11,3 +11,7 @@ This is accomplished through the MahjongClientState class, which
 tracks the all the game state that the client knows. In order to 
 power animations, the client stub also updates the AnimationManager
 class, which track tile model orientations and animations.
+
+## Stuff
+
+Debug tiles generated with https://jsfiddle.net/Lbo6g5kt/2/

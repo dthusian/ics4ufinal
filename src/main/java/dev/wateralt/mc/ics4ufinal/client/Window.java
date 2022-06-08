@@ -13,6 +13,7 @@ import org.lwjgl.nanovg.NanoVGGL3;
 import org.lwjgl.opengl.GL;
 
 import java.util.ArrayList;
+import java.util.stream.Collectors;
 
 public class Window {
   // Window State
@@ -67,15 +68,15 @@ public class Window {
     GLFW.glfwSetMouseButtonCallback(window, (wnd, button, action, mods) -> {
       for(int i = layers.size() - 1; i >= 0; i--) {
         if(action == GLFW.GLFW_PRESS) {
-          layers.get(i).onMousePress(this, button + 1);
+          if(!layers.get(i).onMousePress(this, button + 1)) break;
         } else if(action == GLFW.GLFW_RELEASE) {
-          layers.get(i).onMouseRelease(this, button + 1);
+          if(!layers.get(i).onMouseRelease(this, button + 1)) break;
         }
       }
     });
     GLFW.glfwSetCursorPosCallback(window, (wnd, newMouseX, newMouseY) -> {
       for(int i = layers.size() - 1; i >= 0; i--) {
-        layers.get(i).onMouseMove(this, newMouseX, newMouseY);
+        if(!layers.get(i).onMouseMove(this, newMouseX, newMouseY)) break;
       }
     });
   }
@@ -83,6 +84,16 @@ public class Window {
   public void addLayer(UILayer layer) {
     layer.initialize(this);
     layers.add(layer);
+  }
+
+  public void addLayerBefore(String id, UILayer layer) {
+    layer.initialize(this);
+    layers.add(layers.stream().map(UILayer::getId).toList().indexOf(id), layer);
+  }
+
+  public void addLayerAfter(String id, UILayer layer) {
+    layer.initialize(this);
+    layers.add(layers.stream().map(UILayer::getId).toList().indexOf(id) + 1, layer);
   }
 
   public void replaceLayer(String id, UILayer layer) {

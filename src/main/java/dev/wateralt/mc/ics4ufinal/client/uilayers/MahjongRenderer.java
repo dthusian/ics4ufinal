@@ -2,12 +2,17 @@ package dev.wateralt.mc.ics4ufinal.client.uilayers;
 
 import dev.wateralt.mc.ics4ufinal.client.MahjongClientState;
 import dev.wateralt.mc.ics4ufinal.client.Window;
+import dev.wateralt.mc.ics4ufinal.common.MahjongHand;
+import dev.wateralt.mc.ics4ufinal.common.MahjongTile;
 import dev.wateralt.mc.ics4ufinal.common.Util;
 import dev.wateralt.mc.ics4ufinal.common.exception.NativeLibraryException;
 import org.joml.Matrix4f;
 import org.lwjgl.opengl.GL32;
 
 import org.joml.Vector3f;
+import org.lwjgl.stb.STBImage;
+
+import java.nio.ByteBuffer;
 
 public class MahjongRenderer implements UILayer {
   MahjongClientState state;
@@ -23,11 +28,12 @@ public class MahjongRenderer implements UILayer {
   int vboModel; // (x,y,z,tex_x,tex_y,draw_tex)
   int vaoModel;
   int eboModel;
+  int texMahjong;
   int program;
   Matrix4f matView;
   Matrix4f matProjection;
-  int uniformTransformMat;
-
+  int uniTransformMat;
+  int uniTextureID;
 
   public MahjongRenderer() {
 
@@ -50,9 +56,9 @@ public class MahjongRenderer implements UILayer {
         -0.04f, +0.05f, -0.03f, 0.0f, 1.0f, 1.0f,
         +0.04f, +0.05f, -0.03f, 1.0f, 1.0f, 1.0f,
         -0.04f, -0.05f, +0.03f, 0.0f, 0.0f, 0.0f,
-        +0.04f, -0.05f, +0.03f, 0.0f, 0.0f, 0.0f,
-        -0.04f, +0.05f, +0.03f, 0.0f, 0.0f, 0.0f,
-        +0.04f, +0.05f, +0.03f, 0.0f, 0.0f, 0.0f,
+        +0.04f, -0.05f, +0.03f, 1.0f, 0.0f, 0.0f,
+        -0.04f, +0.05f, +0.03f, 0.0f, 1.0f, 0.0f,
+        +0.04f, +0.05f, +0.03f, 1.0f, 1.0f, 0.0f,
     };
     GL32.glBufferData(GL32.GL_ARRAY_BUFFER, model_data, GL32.GL_STATIC_DRAW);
     GL32.glGenBuffers(cookie);
@@ -91,7 +97,23 @@ public class MahjongRenderer implements UILayer {
     checkProgramCompile(program);
     GL32.glDeleteShader(tsh_vertex);
     GL32.glDeleteShader(tsh_fragment);
-    uniformTransformMat = GL32.glGetUniformLocation(program, "uni_transform_mat");
+    uniTransformMat = GL32.glGetUniformLocation(program, "uni_transform_mat");
+    uniTextureID = GL32.glGetUniformLocation(program, "uni_tex_id");
+
+    // Load texture
+    int[] width = new int[1];
+    int[] height = new int[1];
+    ByteBuffer buf = STBImage.stbi_load(Util.ASSET_ROOT + "/tiles.png", width, height, cookie, 3);
+    if(buf == null) throw new NativeLibraryException("Failed to access image");
+    GL32.glGenTextures(cookie);
+    texMahjong = cookie[0];
+    GL32.glBindTexture(GL32.GL_TEXTURE_2D, texMahjong);
+    GL32.glTexParameteri(GL32.GL_TEXTURE_2D, GL32.GL_TEXTURE_WRAP_S, GL32.GL_REPEAT);
+    GL32.glTexParameteri(GL32.GL_TEXTURE_2D, GL32.GL_TEXTURE_WRAP_T, GL32.GL_REPEAT);
+    GL32.glTexParameteri(GL32.GL_TEXTURE_2D, GL32.GL_TEXTURE_MIN_FILTER, GL32.GL_LINEAR);
+    GL32.glTexParameteri(GL32.GL_TEXTURE_2D, GL32.GL_TEXTURE_MAG_FILTER, GL32.GL_LINEAR);
+    GL32.glTexImage2D(GL32.GL_TEXTURE_2D, 0, GL32.GL_RGB, width[0], height[0], 0, GL32.GL_RGB, GL32.GL_UNSIGNED_BYTE, buf);
+    STBImage.stbi_image_free(buf);
   }
 
   private static void checkShaderCompile(int shader) {
@@ -111,11 +133,12 @@ public class MahjongRenderer implements UILayer {
   }
 
   @Override
-  public void onMouseMove(Window wnd, double newX, double newY) {
+  public boolean onMouseMove(Window wnd, double newX, double newY) {
     modelRotX += (mouseY - newY) / 5;
     modelRotY += (mouseX - newX) / 5;
     mouseX = newX;
     mouseY = newY;
+    return false;
   }
 
   public void setClientState(MahjongClientState state) {
@@ -128,6 +151,31 @@ public class MahjongRenderer implements UILayer {
     return "MahjongRenderer";
   }
 
+  private void renderHand(int i, MahjongHand hand) {
+    int tileIdx = 0;
+    float[] buf = new float[16];
+    //TODO urgent
+    for(MahjongTile tile : hand.getHidden()) {
+      Matrix4f tmt_model = new Matrix4f()
+          .mul(matProjection)
+          .mul(matView)
+          .mul(new Matrix4f()
+              .translate(new Vector3f(-0.1f, -0.2f, -0.8f))
+              .rotateXYZ(new Vector3f((float) Math.toRadians(modelRotX), (float) Math.toRadians(modelRotY), 0.0f))
+          )
+          ;
+      tmt_model.get(buf);
+      GL32.glBindVertexArray(vaoModel);
+      GL32.glUseProgram(program);
+      GL32.glUniformMatrix4fv(uniTransformMat, false, buf);
+      GL32.glUniform1i(uniTextureID, tile.getInternal());
+      GL32.glBindBuffer(GL32.GL_ELEMENT_ARRAY_BUFFER, eboModel);
+      GL32.glBindTexture(GL32.GL_TEXTURE_2D, texMahjong);
+      GL32.glDrawElements(GL32.GL_TRIANGLES, 36, GL32.GL_UNSIGNED_INT, 0);
+      tileIdx++;
+    }
+  }
+
   @Override
   public void render(Window wnd) {
     GL32.glEnable(GL32.GL_DEPTH_TEST);
@@ -137,27 +185,16 @@ public class MahjongRenderer implements UILayer {
     GL32.glClear(GL32.GL_COLOR_BUFFER_BIT | GL32.GL_DEPTH_BUFFER_BIT);
 
     // Perform rendering
-    float[] buf = new float[16];
-    Matrix4f tmt_model = new Matrix4f()
-        .mul(matProjection)
-        .mul(matView)
-        .mul(new Matrix4f()
-            .translate(new Vector3f(-0.1f, -0.2f, -0.8f))
-            .rotateXYZ(new Vector3f((float) Math.toRadians(modelRotX), (float) Math.toRadians(modelRotY), 0.0f))
-        )
-    ;
-    tmt_model.get(buf);
-    GL32.glBindVertexArray(vaoModel);
-    GL32.glUseProgram(program);
-    GL32.glUniformMatrix4fv(uniformTransformMat, false, buf);
-    GL32.glBindBuffer(GL32.GL_ELEMENT_ARRAY_BUFFER, eboModel);
-    GL32.glDrawElements(GL32.GL_TRIANGLES, 36, GL32.GL_UNSIGNED_INT, 0);
+    for(int i = 0; i < 4; i++) {
+      renderHand(i, state.getPlayerHands()[i]);
+    }
   }
 
   @Override
   public void close() {
     GL32.glDeleteProgram(program);
     GL32.glDeleteBuffers(new int[] { vboModel, eboModel });
+    GL32.glDeleteTextures(texMahjong);
     GL32.glDeleteVertexArrays(vaoModel);
   }
 }
