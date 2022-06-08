@@ -30,6 +30,10 @@ public class MahjongTile implements Comparable<MahjongTile> {
     number = id;
   }
 
+  public MahjongTile(String s) {
+    this(Integer.parseInt(Character.toString(s.charAt(0))), s.charAt(1));
+  }
+
   public int getNumber() {
     return number % 10;
   }

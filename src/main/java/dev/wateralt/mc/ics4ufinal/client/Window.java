@@ -138,4 +138,6 @@ public class Window {
   public double getFps() {
     return fps;
   }
+
+  public long getGlfw() { return window; }
 }

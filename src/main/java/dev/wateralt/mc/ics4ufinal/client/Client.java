@@ -9,13 +9,14 @@ import dev.wateralt.mc.ics4ufinal.common.network.Packet;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.Socket;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class Client {
   Socket socket;
   Thread thread;
   MahjongClientState clientState;
-  AtomicInteger signal;
+  AtomicInteger signal; // Host->Thread
 
   public Client(String url) throws IOException {
     socket = new Socket();

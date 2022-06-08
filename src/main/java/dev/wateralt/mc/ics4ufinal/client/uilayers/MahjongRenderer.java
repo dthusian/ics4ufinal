@@ -7,21 +7,21 @@ import dev.wateralt.mc.ics4ufinal.common.MahjongTile;
 import dev.wateralt.mc.ics4ufinal.common.Util;
 import dev.wateralt.mc.ics4ufinal.common.exception.NativeLibraryException;
 import org.joml.Matrix4f;
+import org.lwjgl.glfw.GLFW;
 import org.lwjgl.opengl.GL32;
 
 import org.joml.Vector3f;
 import org.lwjgl.stb.STBImage;
 
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Set;
 
 public class MahjongRenderer implements UILayer {
   MahjongClientState state;
   double mouseX = 0.0f;
   double mouseY = 0.0f;
-
-  // Debug only
-  float modelRotX = 0.0f;
-  float modelRotY = 0.0f;
 
   // OpenGL stuff below
 
@@ -35,14 +35,17 @@ public class MahjongRenderer implements UILayer {
   int uniTransformMat;
   int uniTextureID;
 
+  //
+
   public MahjongRenderer() {
 
   }
 
   @Override
   public void initialize(Window wnd) {
-    matView = new Matrix4f();
-    matProjection = new Matrix4f().perspective((float) Math.toRadians(100), wnd.getWidth()/(float)wnd.getHeight(), 0.1f, 1.0f);
+    matView = new Matrix4f()
+        .translate(new Vector3f(0.0f, 0.0f, 1.0f));
+    matProjection = new Matrix4f().perspective((float) Math.toRadians(100), wnd.getWidth()/(float)wnd.getHeight(), 0.1f, 5.0f);
     int[] cookie = new int[1];
     GL32.glGenVertexArrays(cookie);
     vaoModel = cookie[0];
@@ -114,6 +117,8 @@ public class MahjongRenderer implements UILayer {
     GL32.glTexParameteri(GL32.GL_TEXTURE_2D, GL32.GL_TEXTURE_MAG_FILTER, GL32.GL_LINEAR);
     GL32.glTexImage2D(GL32.GL_TEXTURE_2D, 0, GL32.GL_RGB, width[0], height[0], 0, GL32.GL_RGB, GL32.GL_UNSIGNED_BYTE, buf);
     STBImage.stbi_image_free(buf);
+
+    GLFW.glfwSetInputMode(wnd.getGlfw(), GLFW.GLFW_CURSOR, GLFW.GLFW_CURSOR_DISABLED);
   }
 
   private static void checkShaderCompile(int shader) {
@@ -134,8 +139,9 @@ public class MahjongRenderer implements UILayer {
 
   @Override
   public boolean onMouseMove(Window wnd, double newX, double newY) {
-    modelRotX += (mouseY - newY) / 5;
-    modelRotY += (mouseX - newX) / 5;
+    matView = new Matrix4f()
+        .rotateXYZ((float) Math.toRadians(newY), -(float) Math.toRadians(newX), 0.0f)
+        .translate(new Vector3f(1.2f, 0.0f, 0.0f));
     mouseX = newX;
     mouseY = newY;
     return false;
@@ -153,18 +159,17 @@ public class MahjongRenderer implements UILayer {
 
   private void renderHand(int i, MahjongHand hand) {
     int tileIdx = 0;
+
     float[] buf = new float[16];
-    //TODO urgent
     for(MahjongTile tile : hand.getHidden()) {
-      Matrix4f tmt_model = new Matrix4f()
+      Matrix4f tmtModel = new Matrix4f()
           .mul(matProjection)
           .mul(matView)
           .mul(new Matrix4f()
-              .translate(new Vector3f(-0.1f, -0.2f, -0.8f))
-              .rotateXYZ(new Vector3f((float) Math.toRadians(modelRotX), (float) Math.toRadians(modelRotY), 0.0f))
-          )
-          ;
-      tmt_model.get(buf);
+              .rotateY((float) Math.toRadians(i * 90.0f + 180.0f))
+              .translate(new Vector3f(0.08f * tileIdx - hand.getLength() * 0.08f / 2, 0.3f, -0.8f))
+          );
+      tmtModel.get(buf);
       GL32.glBindVertexArray(vaoModel);
       GL32.glUseProgram(program);
       GL32.glUniformMatrix4fv(uniTransformMat, false, buf);
@@ -184,7 +189,6 @@ public class MahjongRenderer implements UILayer {
     GL32.glClearColor(0.0f, 0.8f, 0.2f, 0.0f);
     GL32.glClear(GL32.GL_COLOR_BUFFER_BIT | GL32.GL_DEPTH_BUFFER_BIT);
 
-    // Perform rendering
     for(int i = 0; i < 4; i++) {
       renderHand(i, state.getPlayerHands()[i]);
     }
