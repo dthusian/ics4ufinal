@@ -1,5 +1,6 @@
 package dev.wateralt.mc.ics4ufinal.server.controllers;
 
+import dev.wateralt.mc.ics4ufinal.common.Logger;
 import dev.wateralt.mc.ics4ufinal.common.Util;
 import dev.wateralt.mc.ics4ufinal.common.network.Packet;
 import dev.wateralt.mc.ics4ufinal.common.network.SelfNamePacket;
@@ -7,6 +8,7 @@ import dev.wateralt.mc.ics4ufinal.server.MahjongGame;
 
 import java.io.IOException;
 import java.net.Socket;
+import java.nio.ByteBuffer;
 import java.util.ArrayDeque;
 import java.util.Queue;
 
@@ -15,9 +17,11 @@ public class NetworkPlayerController implements Controller {
   final Thread transferThread;
   MahjongGame.PlayerState playerState;
   final Queue<Packet> turnsPacketQueue;
+  Logger logs;
 
   public NetworkPlayerController(Socket tcpStream) {
     sock = tcpStream;
+    logs = new Logger(this);
     turnsPacketQueue = new ArrayDeque<>();
     transferThread = new Thread(this::threadMain);
     transferThread.start();
@@ -26,7 +30,9 @@ public class NetworkPlayerController implements Controller {
   private void threadMain() {
     while(true) {
       try {
-        Packet p = Packet.deserialize(Util.readSinglePacket(sock.getInputStream()));
+        ByteBuffer buf = Util.readSinglePacket(sock.getInputStream());
+        if(Util.DEBUG) logs.info("Packet Recieved: %s", Util.debugPrintPacket(buf));
+        Packet p = Packet.deserialize(buf);
         handlePacket(p);
       } catch(IOException ignored) {
         break;

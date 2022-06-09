@@ -22,7 +22,7 @@ public class Logger {
   }
 
   public Logger(Object clazz) {
-    this.name = clazz.getClass().getName();
+    this.name = clazz.getClass().getSimpleName();
   }
 
   private void outRaw(String level, String msg) {

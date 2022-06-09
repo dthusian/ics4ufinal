@@ -1,11 +1,16 @@
 package dev.wateralt.mc.ics4ufinal.common;
 
+import dev.wateralt.mc.ics4ufinal.common.network.Packet;
+
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 import java.util.Random;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class Util {
   public static final boolean DEBUG = true;
@@ -42,5 +47,15 @@ public class Util {
     read = stream.read(buf.array(), 4, length + 4);
     if(read != length + 4) throw new IOException();
     return buf;
+  }
+
+  public static String debugPrintPacket(ByteBuffer buf) {
+    Packet p = Packet.deserialize(buf);
+    return String.format("Type: %s Length: %d Bytes: %s",
+        p.getClass().getSimpleName(),
+        buf.capacity(),
+        Stream.of(buf.array())
+            .map("%02x "::formatted)
+            .collect(Collectors.joining()));
   }
 }
