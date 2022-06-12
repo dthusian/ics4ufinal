@@ -17,10 +17,9 @@ class, which track tile model orientations and animations.
 Debug tiles generated with https://jsfiddle.net/Lbo6g5kt/2/
 
 ## TODO
-- (tmp) render MahjongHands
 - Test network code
 - Impl pon/chi/kan
-- Impl yaku/wincondition
+- Impl yaku/win condition
 - Impl UI
 - Impl replay game
 - Impl animations (maybe)

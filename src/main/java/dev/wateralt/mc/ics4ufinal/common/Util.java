@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 import java.util.stream.Collectors;
@@ -43,7 +44,7 @@ public class Util {
     if(read != 4) throw new IOException();
     int length = lengthBuf.getInt(0);
     ByteBuffer buf = ByteBuffer.allocate(length + 8);
-    buf.putInt(read);
+    buf.putInt(length);
     read = stream.read(buf.array(), 4, length + 4);
     if(read != length + 4) throw new IOException();
     return buf;
@@ -54,8 +55,21 @@ public class Util {
     return String.format("Type: %s Length: %d Bytes: %s",
         p.getClass().getSimpleName(),
         buf.capacity(),
-        Stream.of(buf.array())
-            .map("%02x "::formatted)
-            .collect(Collectors.joining()));
+        byteBufToString(buf));
+  }
+
+  // This method is only meaningful in Java because Java is stupid
+  public static Byte[] byteArrayToByteArray(byte[] arr) {
+    Byte[] arr2 = new Byte[arr.length];
+    for(int i = 0; i < arr.length; i++) {
+      arr2[i] = arr[i];
+    }
+    return arr2;
+  }
+
+  public static String byteBufToString(ByteBuffer buf) {
+    return Arrays.stream(Util.byteArrayToByteArray(buf.array()))
+        .map("%02x "::formatted)
+        .collect(Collectors.joining());
   }
 }

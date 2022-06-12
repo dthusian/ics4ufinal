@@ -2,6 +2,7 @@ package dev.wateralt.mc.ics4ufinal.server;
 
 import dev.wateralt.mc.ics4ufinal.common.Logger;
 import dev.wateralt.mc.ics4ufinal.server.controllers.NetworkPlayerController;
+import dev.wateralt.mc.ics4ufinal.server.controllers.NullController;
 
 import java.io.IOException;
 import java.net.ServerSocket;
@@ -40,7 +41,10 @@ public class Server {
       Socket client = socket.accept();
       logs.info("Player connected: %s", client.getInetAddress().toString());
       state.addPlayer(new NetworkPlayerController(client));
-
+      state.addPlayer(new NullController());
+      state.addPlayer(new NullController());
+      state.addPlayer(new NullController());
+      state.runGame();
     } catch(IOException ignored) {
     }
   }

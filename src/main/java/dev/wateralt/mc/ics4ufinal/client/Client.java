@@ -57,7 +57,6 @@ public class Client {
               clientState.setMyPlayerId(pDerived.getPlayer());
             }
           }
-          break;
         } else if(p.getId() == DiscardTilePacket.ID) {
           DiscardTilePacket pDerived = (DiscardTilePacket)p;
           synchronized (clientState) {

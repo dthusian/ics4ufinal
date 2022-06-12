@@ -60,7 +60,6 @@ public class MahjongGame {
   }
 
   Deque<MahjongTile> deck;
-  // Player 0 is always the dealer
   PlayerState[] players;
   int dealer;
 
@@ -162,7 +161,7 @@ public class MahjongGame {
     createDeckAndDeal(timeSeed.getEpochSecond() ^ timeSeed.getNano());
     // Send tiles to all players
     for(int j = 0; j < 4; j++) { // Send packets about player j's hand
-      for(int k = 0; k < players[j].hand.getLength(); k++) { // Send tile k
+      for(int k = 0; k < players[j].hand.getHidden().size(); k++) { // Send tile k
         broadcastExcept(new GainTilePacket(MahjongTile.NULL, j), j, new GainTilePacket(players[j].hand.getHidden().get(k), j));
       }
     }

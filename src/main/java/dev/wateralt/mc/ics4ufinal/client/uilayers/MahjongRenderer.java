@@ -141,7 +141,7 @@ public class MahjongRenderer implements UILayer {
   public boolean onMouseMove(Window wnd, double newX, double newY) {
     matView = new Matrix4f()
         .rotateXYZ((float) Math.toRadians(newY), -(float) Math.toRadians(newX), 0.0f)
-        .translate(new Vector3f(1.2f, 0.0f, 0.0f));
+        .translate(new Vector3f(0.0f, 0.0f, -1.2f));
     mouseX = newX;
     mouseY = newY;
     return false;

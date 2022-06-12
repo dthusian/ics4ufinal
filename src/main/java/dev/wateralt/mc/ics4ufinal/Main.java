@@ -28,6 +28,7 @@ public class Main {
     wnd.addLayer(render);
     wnd.addLayer(new DebugLayer());
     wnd.run();
+    System.exit(0);
   }
 
   public static void serverMain() {

@@ -27,6 +27,7 @@ public abstract class Packet {
 
   public static ByteBuffer serialize(Packet p) {
     ByteBuffer noHeader = p.serializeInternal();
+    noHeader.rewind();
     ByteBuffer newBuf = ByteBuffer.allocate(noHeader.capacity() + 8);
     newBuf.putInt(noHeader.capacity());
     newBuf.putInt(p.getId());
