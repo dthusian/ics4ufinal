@@ -3,6 +3,9 @@ package dev.wateralt.mc.ics4ufinal.common;
 import java.util.ArrayList;
 import java.util.Objects;
 
+/**
+ * Contains all the information of a Mahjong Hand.
+ */
 public class MahjongHand {
   // Yes. I know LinkedList works better here.
   // I dislike LinkedList for personal reasons.
@@ -26,29 +29,57 @@ public class MahjongHand {
     finalTile = MahjongTile.NULL;
   }
 
+  /**
+   * @return the hidden part of the hand.
+   */
   public ArrayList<MahjongTile> getHidden() {
     return hidden;
   }
 
+  /**
+   * @return a list the hidden kans called by this player.
+   */
   public ArrayList<MahjongTile> getHiddenKan() {
     return hiddenKan;
   }
 
+  /**
+   *
+   * @return a list of all chi, pon, or open kan called by this player.
+   */
   public ArrayList<MahjongTile> getShown() {
     return shown;
   }
 
+  /**
+   *
+   * @return the final tile (agari) that the player has won with.
+   */
   public MahjongTile getFinalTile() {
     return finalTile;
   }
 
+  /**
+   *
+   * @param finalTile sets the final tile (agari)
+   */
   public void setFinalTile(MahjongTile finalTile) {
     this.finalTile = finalTile;
   }
+
+  /**
+   *
+   * @return the total size of the hand, with all shown and hidden tiles and the last tile.
+   */
   public int getLength() {
-    return hidden.size() + hiddenKan.size() + shown.size() + (finalTile == null ? 0 : 1);
+    return hidden.size() + hiddenKan.size() + shown.size() + (finalTile.equals(MahjongTile.NULL) ? 0 : 1);
   }
 
+  /**
+   * Checks equality with another mahjong hand.
+   * @param o The other mahjong hand.
+   * @return true if the two hands are equal.
+   */
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;

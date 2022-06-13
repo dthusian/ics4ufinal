@@ -30,7 +30,10 @@ public abstract class BasicTilePacket extends Packet {
     this.player = player;
   }
 
-
+  /**
+   *
+   * @return
+   */
   @Override
   public ByteBuffer serializeInternal() {
     ByteBuffer buf = ByteBuffer.allocate(8);
@@ -39,24 +42,44 @@ public abstract class BasicTilePacket extends Packet {
     return buf;
   }
 
+  /**
+   *
+   * @param buf The buffer to deserialize. The contents will be assigned to this object.
+   */
   @Override
   public void deserializeInternal(ByteBuffer buf) {
     tile = new MahjongTile(buf.getInt());
     player = buf.getInt();
   }
 
+  /**
+   *
+   * @return The tile inside of this packet.
+   */
   public MahjongTile getTile() {
     return tile;
   }
 
+  /**
+   *
+   * @param tile The tile to set to.
+   */
   public void setTile(MahjongTile tile) {
     this.tile = tile;
   }
 
+  /**
+   *
+   * @return The player index inside of this packet
+   */
   public int getPlayer() {
     return player;
   }
 
+  /**
+   *
+   * @param player The player to set to.
+   */
   public void setPlayer(int player) {
     this.player = player;
   }

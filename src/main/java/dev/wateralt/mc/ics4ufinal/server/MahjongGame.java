@@ -12,7 +12,13 @@ import dev.wateralt.mc.ics4ufinal.server.controllers.NullController;
 import java.time.Instant;
 import java.util.*;
 
+/**
+ * Master class controlling the Mahjong game flow. Manages all the moves and state of the game.
+ */
 public class MahjongGame {
+  /**
+   * Represents all the state of one player.
+   */
   public static class PlayerState {
     private Controller controller;
     private MahjongHand hand;
@@ -26,34 +32,66 @@ public class MahjongGame {
       name = name2;
     }
 
+    /**
+     *
+     * @return the name of the player
+     */
     public String getName() {
       return name;
     }
 
+    /**
+     *
+     * @param name the new name of the player
+     */
     public void setName(String name) {
       this.name = name;
     }
 
+    /**
+     *
+     * @return the discard pile of the player
+     */
     public ArrayList<MahjongTile> getDiscardPile() {
       return discardPile;
     }
 
+    /**
+     *
+     * @param discardPile the new discard pile of the player
+     */
     public void setDiscardPile(ArrayList<MahjongTile> discardPile) {
       this.discardPile = discardPile;
     }
 
+    /**
+     *
+     * @return the controller backing the player
+     */
     public Controller getController() {
       return controller;
     }
 
+    /**
+     *
+     * @param controller the controller backing the player
+     */
     public void setController(Controller controller) {
       this.controller = controller;
     }
 
+    /**
+     *
+     * @return the player's hand
+     */
     public MahjongHand getHand() {
       return hand;
     }
 
+    /**
+     *
+     * @param hand the player's new hand
+     */
     public void setHand(MahjongHand hand) {
       this.hand = hand;
     }
@@ -63,6 +101,9 @@ public class MahjongGame {
   PlayerState[] players;
   int dealer;
 
+  /**
+   * Initializes a new game. The game needs players in order to begin.
+   */
   public MahjongGame() {
     deck = new ArrayDeque<>();
     players = new PlayerState[4];
@@ -71,6 +112,10 @@ public class MahjongGame {
 
   // Setup functions
 
+  /**
+   * Adds a player to the game. Throws an exception if more than 4 players are added.
+   * @param ctl
+   */
   public void addPlayer(Controller ctl) {
     boolean inserted = false;
     for(int i = 0; i < players.length; i++) {
@@ -86,14 +131,25 @@ public class MahjongGame {
     }
   }
 
+  /**
+   *
+   * @return the index of player that is responsible for dealing.
+   */
   public int getDealer() {
     return dealer;
   }
 
+  /**
+   *
+   * @param dealer the new player responsible for dealing.
+   */
   public void setDealer(int dealer) {
     this.dealer = dealer;
   }
 
+  /**
+   * Throws an error if the game cannot start because some precondition isn't met.
+   */
   public void checkStartConditions() {
     for (PlayerState player : players) {
       if (player == null) {
@@ -155,6 +211,9 @@ public class MahjongGame {
     pl.controller = new NullController();
   }
 
+  /**
+   * Starts the game! Blocks the calling thread until the game is finished.
+   */
   public void runGame() {
     checkStartConditions();
     Instant timeSeed = Instant.now();
@@ -210,6 +269,11 @@ public class MahjongGame {
     }
   }
 
+  /**
+   * Get the state associated with a specified player.
+   * @param id The player to query
+   * @return the player's state.
+   */
   public PlayerState getPlayer(int id) {
     return players[id];
   }

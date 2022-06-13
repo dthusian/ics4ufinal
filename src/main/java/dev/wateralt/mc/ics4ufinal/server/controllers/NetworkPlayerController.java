@@ -12,6 +12,9 @@ import java.nio.ByteBuffer;
 import java.util.ArrayDeque;
 import java.util.Queue;
 
+/**
+ * Represents a player connected over the network. Maintains a thread for sending and receiving data.
+ */
 public class NetworkPlayerController implements Controller {
   final Socket sock;
   final Thread transferThread;
@@ -19,6 +22,10 @@ public class NetworkPlayerController implements Controller {
   final Queue<Packet> turnsPacketQueue;
   Logger logs;
 
+  /**
+   * Constructs new controller with a socket.
+   * @param tcpStream The socket.
+   */
   public NetworkPlayerController(Socket tcpStream) {
     sock = tcpStream;
     logs = new Logger(this);
@@ -52,11 +59,20 @@ public class NetworkPlayerController implements Controller {
     }
   }
 
+  /**
+   *
+   * @param state The game state.
+   * @param playerId The index of the player that this controller controls.
+   */
   @Override
   public void initialize(MahjongGame state, int playerId) {
     playerState = state.getPlayer(playerId);
   }
 
+  /**
+   *
+   * @param packet The packet to send.
+   */
   @Override
   public void send(Packet packet) {
     try {
@@ -66,6 +82,11 @@ public class NetworkPlayerController implements Controller {
     }
   }
 
+  /**
+   *
+   * @param timeout The time to wait for incoming moves, in milliseconds.
+   * @return
+   */
   @Override
   public Packet receive(int timeout) {
     try {

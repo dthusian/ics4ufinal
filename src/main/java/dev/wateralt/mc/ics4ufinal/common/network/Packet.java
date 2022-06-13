@@ -29,11 +29,19 @@ import java.nio.ByteOrder;
  */
 public abstract class Packet {
   /**
-   *
-   * @return
+   * Returns the integer type of this packet
+   * @return The integer type of this packet
    */
   public abstract int getId();
+
+  /**
+   * Serializes the packet into a bytebuffer.  Don't call directly, use Packet.serialize which wraps the raw bytes with a length and type.
+   */
   protected abstract ByteBuffer serializeInternal();
+
+  /**
+   * @param buf The buffer to deserialize. The contents will be assigned to this object.
+   */
   protected abstract void deserializeInternal(ByteBuffer buf);
 
   /**
@@ -54,7 +62,7 @@ public abstract class Packet {
   /**
    * Deserializes a packet from bytes.
    * @param bytes The bytes representing the packet
-   * @return
+   * @return The packet represented by the bytes.
    */
   public static Packet deserialize(ByteBuffer bytes) {
     bytes.order(ByteOrder.BIG_ENDIAN);

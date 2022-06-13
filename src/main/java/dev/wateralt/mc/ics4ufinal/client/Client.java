@@ -6,6 +6,7 @@ import dev.wateralt.mc.ics4ufinal.common.Util;
 import dev.wateralt.mc.ics4ufinal.common.network.DiscardTilePacket;
 import dev.wateralt.mc.ics4ufinal.common.network.GainTilePacket;
 import dev.wateralt.mc.ics4ufinal.common.network.Packet;
+import dev.wateralt.mc.ics4ufinal.common.network.SelfNamePacket;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -63,6 +64,7 @@ public class Client {
 
   private void threadMain() {
     try {
+      socket.getOutputStream().write(Packet.serialize(new SelfNamePacket("Among Us")).array());
       while(true) {
         ByteBuffer buf = Util.readSinglePacket(socket.getInputStream());
         if(Util.DEBUG) logs.info("Packet Received: %s", Util.debugPrintPacket(buf));

@@ -13,13 +13,25 @@ import java.util.Random;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+/**
+ * Random utility functions.
+ */
 public class Util {
+  /**
+   * True if debugging, false otherwise.
+   */
   public static final boolean DEBUG = true;
 
+  /**
+   * Returns the directory containing all asset files.
+   */
   public static String ASSET_ROOT = "assets/";
 
-  public static final Random RANDOM = new Random();
-
+  /**
+   * Reads all the contents of a file into a single string
+   * @param path The path of the file to read
+   * @return The contents of the file
+   */
   public static String slurp(String path) {
     try {
       FileInputStream inputStream = new FileInputStream(path);
@@ -31,6 +43,12 @@ public class Util {
     }
   }
 
+  /**
+   * Reads a pascal-string from a byte buffer
+   * @param buf The buffer to read from.
+   * @param idx The starting index of the string
+   * @return The read string.
+   */
   public static String byteBufReadString(ByteBuffer buf, int idx) {
     int length = buf.getInt(idx);
     byte[] strBuf = new byte[length];
@@ -38,6 +56,12 @@ public class Util {
     return new String(strBuf);
   }
 
+  /**
+   * Reads a single packet from the input stream based on the length read.
+   * @param stream The stream to read from
+   * @return The bytebuffer containing the new packet
+   * @throws IOException
+   */
   public static ByteBuffer readSinglePacket(InputStream stream) throws IOException {
     ByteBuffer lengthBuf = ByteBuffer.allocate(4);
     int read = stream.read(lengthBuf.array(), 0, 4);
@@ -50,6 +74,11 @@ public class Util {
     return buf;
   }
 
+  /**
+   * Stringifies the contents of a packet.
+   * @param buf The packet
+   * @return
+   */
   public static String debugPrintPacket(ByteBuffer buf) {
     Packet p = Packet.deserialize(buf);
     return String.format("Type: %s Length: %d Bytes: %s",
@@ -58,7 +87,12 @@ public class Util {
         byteBufToString(buf));
   }
 
-  // This method is only meaningful in Java because Java is stupid
+  /**
+   * Converts a byte[] to a Byte[], so that it can be
+   * used in generic methods. I hate Java.
+   * @param arr The byte[]
+   * @return The Byte[]
+   */
   public static Byte[] byteArrayToByteArray(byte[] arr) {
     Byte[] arr2 = new Byte[arr.length];
     for(int i = 0; i < arr.length; i++) {
@@ -67,6 +101,11 @@ public class Util {
     return arr2;
   }
 
+  /**
+   * Converts a byte buffer to hex representation.
+   * @param buf The buffer to convert.
+   * @return The converted buffer.
+   */
   public static String byteBufToString(ByteBuffer buf) {
     return Arrays.stream(Util.byteArrayToByteArray(buf.array()))
         .map("%02x "::formatted)
