@@ -15,16 +15,40 @@ import org.lwjgl.opengl.GL;
 import java.util.ArrayList;
 import java.util.stream.Collectors;
 
+/**
+ * <h2>Window</h2>
+ *
+ * The window class performs rendering of UI layers and manages them. It uses GLFW from LWJGL to accomplish this.
+ */
 public class Window {
   // Window State
+
+  // GLFW handle to Window
   long window;
+
+  // Dimensions of Window
   int width, height;
+
+  // DPI of screen
   float dpi;
+
+  // NanoVG handle
   long nanovg;
+
+  // ArrayList of layers
+  // Yes, I know linkedlists are better but I personally dislike them
   ArrayList<UILayer> layers;
+
+  // Last measured frames per second of renderer
   double fps;
+
+  // Logging
   Logger logs;
 
+  /**
+   * Constructs a Window with the specified title
+   * @param title
+   */
   public Window(String title) {
     layers = new ArrayList<>();
     logs = new Logger(this);
@@ -81,16 +105,30 @@ public class Window {
     });
   }
 
+  /**
+   * Adds a layer to the top of the UI layer stack
+   * @param layer The layer to add
+   */
   public void addLayer(UILayer layer) {
     layer.initialize(this);
     layers.add(layer);
   }
 
+  /**
+   * Adds a UI layer into the UI layer stack before the specified layer
+   * @param id The ID of the specified layer
+   * @param layer The layer to add
+   */
   public void addLayerBefore(String id, UILayer layer) {
     layer.initialize(this);
     layers.add(layers.stream().map(UILayer::getId).toList().indexOf(id), layer);
   }
 
+  /**
+   * Adds a UI layer into the UI layer stack before the specified layer
+   * @param id The ID of the specified layer
+   * @param layer The layer to add
+   */
   public void addLayerAfter(String id, UILayer layer) {
     layer.initialize(this);
     layers.add(layers.stream().map(UILayer::getId).toList().indexOf(id) + 1, layer);
@@ -99,6 +137,7 @@ public class Window {
   public void replaceLayer(String id, UILayer layer) {
     for(int i = 0; i < layers.size(); i++) {
       if(layers.get(i).getId().equals(id)) {
+        layers.get(i).close();
         layers.set(i, layer);
         break;
       }

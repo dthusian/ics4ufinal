@@ -10,6 +10,12 @@ import org.lwjgl.opengl.GL32;
 import java.time.Instant;
 import java.time.temporal.ChronoField;
 
+/**
+ * <h2>Debug Layer</h2>
+ *
+ * The debug layer displays various information about the machine and current statistics.
+ * It's most useful for troubleshooting and will not be enabled by default in the final product.
+ */
 public class DebugLayer implements UILayer {
   private static class DebugPrinter {
     int posY = 25;
@@ -23,6 +29,7 @@ public class DebugLayer implements UILayer {
     }
   }
 
+  // NanoVG handle to Jetbrains Mono font for debugging
   int debugFont;
 
   // Debug info
@@ -39,6 +46,9 @@ public class DebugLayer implements UILayer {
   long memMax;
   double fps;
 
+  /**
+   * Normal constructor.
+   */
   public DebugLayer() {
     debugFont = 0;
     lastUpdated100ms = -1;
@@ -48,6 +58,10 @@ public class DebugLayer implements UILayer {
     javaVendor = System.getProperty("java.vendor");
   }
 
+  /**
+   *
+   * @param wnd The window that the layer will be added to.
+   */
   @Override
   public void initialize(Window wnd) {
     debugFont = NanoVG.nvgCreateFont(wnd.getNanoVG(), "Jetbrains Mono", Util.ASSET_ROOT + "/JetBrainsMono-Regular.ttf");
@@ -57,11 +71,19 @@ public class DebugLayer implements UILayer {
     (new Logger(this)).info("Debug layer enabled");
   }
 
+  /**
+   *
+   * @return
+   */
   @Override
   public String getId() {
     return "DebugLayer";
   }
 
+  /**
+   * Retrieves new information about the system, like FPS and memory used.
+   * @param wnd The window to profile FPS from.
+   */
   public void updateInfo(Window wnd) {
     long current100ms = Instant.now().getLong(ChronoField.MILLI_OF_SECOND) / 100;
     if(lastUpdated100ms != current100ms) {
@@ -73,6 +95,10 @@ public class DebugLayer implements UILayer {
     }
   }
 
+  /**
+   *
+   * @param wnd The window to render to.
+   */
   @Override
   public void render(Window wnd) {
     updateInfo(wnd);

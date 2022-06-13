@@ -18,8 +18,17 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
 
+/**
+ * <h2>Mahjong Renderer</h2>
+ *
+ * The main substance of the 3D rendering. Ms. Wong - if you're not familiar with OpenGL,
+ * this part will be most difficult to understand. I'll try to add internal comments as much as possible.
+ */
 public class MahjongRenderer implements UILayer {
+  // State
   MahjongClientState state;
+
+  // Last mouse positions
   double mouseX = 0.0f;
   double mouseY = 0.0f;
 
@@ -35,12 +44,17 @@ public class MahjongRenderer implements UILayer {
   int uniTransformMat;
   int uniTextureID;
 
-  //
-
+  /**
+   * Normal constructor.
+   */
   public MahjongRenderer() {
 
   }
 
+  /**
+   *
+   * @param wnd The window that the layer will be added to.
+   */
   @Override
   public void initialize(Window wnd) {
     matView = new Matrix4f()
@@ -137,6 +151,13 @@ public class MahjongRenderer implements UILayer {
     }
   }
 
+  /**
+   *
+   * @param wnd The window the event is fired for.
+   * @param newX The x-position (in pixels from the left) that the mouse is now at.
+   * @param newY The y-position (in pixels from the top) that the mouse is now
+   * @return
+   */
   @Override
   public boolean onMouseMove(Window wnd, double newX, double newY) {
     matView = new Matrix4f()
@@ -147,10 +168,18 @@ public class MahjongRenderer implements UILayer {
     return false;
   }
 
+  /**
+   * Sets the client state that should be rendered.
+   * @param state State to be rendered.
+   */
   public void setClientState(MahjongClientState state) {
     this.state = state;
   }
 
+  /**
+   *
+   * @return
+   */
   @Override
   public String getId() {
     // Assume only 1 renderer can be active at once
@@ -181,6 +210,10 @@ public class MahjongRenderer implements UILayer {
     }
   }
 
+  /**
+   *
+   * @param wnd The window to render to.
+   */
   @Override
   public void render(Window wnd) {
     GL32.glEnable(GL32.GL_DEPTH_TEST);
@@ -194,6 +227,9 @@ public class MahjongRenderer implements UILayer {
     }
   }
 
+  /**
+   *
+   */
   @Override
   public void close() {
     GL32.glDeleteProgram(program);

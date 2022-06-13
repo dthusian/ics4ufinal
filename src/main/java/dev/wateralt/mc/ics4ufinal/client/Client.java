@@ -14,6 +14,12 @@ import java.nio.ByteBuffer;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
+/**
+ * <h2>Client</h2>
+ *
+ * The client class contains a batteries-included client portion of the client-server networking model.
+ * It starts a new thread to receive packets and updates the MahjongClientState with that info.
+ */
 public class Client {
   Socket socket;
   Thread thread;
@@ -21,6 +27,11 @@ public class Client {
   AtomicInteger signal; // Host->Thread
   Logger logs;
 
+  /**
+   * Connects a client to a remote Mahjong server
+   * @param url URL of that server, written in <pre>&lt;ip&gt;:&lt;port&gt;</pre> notation
+   * @throws IOException
+   */
   public Client(String url) throws IOException {
     socket = new Socket();
     String[] urlParts = url.split(":");
@@ -33,10 +44,19 @@ public class Client {
     thread.start();
   }
 
+  /**
+   * Connects a client to the local testing server
+   * @return The client connected
+   * @throws IOException
+   */
   public static Client startDebug() throws IOException {
     return new Client("localhost:42727");
   }
 
+  /**
+   * Gets the client state associated with this Client
+   * @return The client state
+   */
   public MahjongClientState getClientState() {
     return clientState;
   }
@@ -71,6 +91,9 @@ public class Client {
     }
   }
 
+  /**
+   * Stops the listening thread and releases resources used
+   */
   public void close() {
     signal.set(1);
   }

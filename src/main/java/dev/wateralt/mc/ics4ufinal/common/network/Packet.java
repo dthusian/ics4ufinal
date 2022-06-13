@@ -5,26 +5,42 @@ import dev.wateralt.mc.ics4ufinal.common.Util;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
-/*
-Packet format:
-- Always big-endian
-
-i32 -> Packet length (not including this header)
-i32 -> Packet type
-bytes -> Packet data
-
-Packet types:
-1xx: Connection negotiation and game setup
-2xx: Normal gameplay, S->C
-3xx: Normal gameplay, C->S and S->C
-4xx: Errors and disconnections
-*/
-
+/**
+ * <h2>Networking</h2>
+ * The core of networking here is the Packet class. Each packet type inherits
+ * Packet, and they need to be able to serialize and deserialize themselves.
+ * Unfortunately, without reflection, it's difficult to generically match
+ * packet types to packet classes, so the deserialize method is rather
+ * long.
+ *
+ * <pre>
+ * Packet format:
+ * - Always big-endian
+ *
+ * i32 -> Packet length (not including this header)
+ * i32 -> Packet type
+ * bytes -> Packet data
+ *
+ * Packet types:
+ * 1xx: Connection negotiation and game setup
+ * 2xx: Normal gameplay
+ * 3xx: Errors and disconnections
+ * </pre>
+ */
 public abstract class Packet {
+  /**
+   *
+   * @return
+   */
   public abstract int getId();
   protected abstract ByteBuffer serializeInternal();
   protected abstract void deserializeInternal(ByteBuffer buf);
 
+  /**
+   * Serializes a packet into a ByteBuffer
+   * @param p The packet to serialize
+   * @return The serialized bytes
+   */
   public static ByteBuffer serialize(Packet p) {
     ByteBuffer noHeader = p.serializeInternal();
     noHeader.rewind();
@@ -35,6 +51,11 @@ public abstract class Packet {
     return newBuf;
   }
 
+  /**
+   * Deserializes a packet from bytes.
+   * @param bytes The bytes representing the packet
+   * @return
+   */
   public static Packet deserialize(ByteBuffer bytes) {
     bytes.order(ByteOrder.BIG_ENDIAN);
     int length = bytes.getInt(0);
