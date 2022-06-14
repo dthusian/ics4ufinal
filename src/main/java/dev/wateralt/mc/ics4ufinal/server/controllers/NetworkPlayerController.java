@@ -38,7 +38,7 @@ public class NetworkPlayerController implements Controller {
     while(true) {
       try {
         ByteBuffer buf = Util.readSinglePacket(sock.getInputStream());
-        if(Util.DEBUG) logs.info("Packet Recieved: %s", Util.debugPrintPacket(buf));
+        if(Util.DEBUG) logs.info("Packet Received: %s", Util.debugPrintPacket(buf));
         Packet p = Packet.deserialize(buf);
         handlePacket(p);
       } catch(IOException ignored) {
@@ -55,7 +55,9 @@ public class NetworkPlayerController implements Controller {
         playerState.setName(((SelfNamePacket)p).getName());
       }
     } else {
-      turnsPacketQueue.add(p);
+      synchronized (turnsPacketQueue) {
+        turnsPacketQueue.add(p);
+      }
     }
   }
 

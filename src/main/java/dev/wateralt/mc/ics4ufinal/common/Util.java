@@ -75,16 +75,14 @@ public class Util {
   }
 
   /**
-   * Stringifies the contents of a packet.
+   * Stringifies the contents of a packet. In the past this method revealed more information
+   * about the packet, but that relied on buggy network code that was often
+   * the thing being debugged. Now, it's just an alias of byteBufToString
    * @param buf The packet
    * @return
    */
   public static String debugPrintPacket(ByteBuffer buf) {
-    Packet p = Packet.deserialize(buf);
-    return String.format("Type: %s Length: %d Bytes: %s",
-        p.getClass().getSimpleName(),
-        buf.capacity(),
-        byteBufToString(buf));
+    return Util.byteBufToString(buf);
   }
 
   /**

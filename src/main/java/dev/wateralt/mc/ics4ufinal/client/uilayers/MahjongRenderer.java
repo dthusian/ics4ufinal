@@ -14,9 +14,6 @@ import org.joml.Vector3f;
 import org.lwjgl.stb.STBImage;
 
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.Set;
 
 /**
  * <h2>Mahjong Renderer</h2>
@@ -31,6 +28,7 @@ public class MahjongRenderer implements UILayer {
   // Last mouse positions
   double mouseX = 0.0f;
   double mouseY = 0.0f;
+  int hoveredTileIdx = -1;
 
   // OpenGL stuff below
 
@@ -39,10 +37,12 @@ public class MahjongRenderer implements UILayer {
   int eboModel;
   int texMahjong;
   int program;
+  int raycastShaders;
   Matrix4f matView;
   Matrix4f matProjection;
-  int uniTransformMat;
-  int uniTextureID;
+  int framebuffer;
+  int framebufferColor;
+  int framebufferDepth;
 
   /**
    * Normal constructor.
@@ -61,6 +61,9 @@ public class MahjongRenderer implements UILayer {
         .translate(new Vector3f(0.0f, 0.0f, 1.0f));
     matProjection = new Matrix4f().perspective((float) Math.toRadians(100), wnd.getWidth()/(float)wnd.getHeight(), 0.1f, 5.0f);
     int[] cookie = new int[1];
+
+    // Model loading
+    // Hardcoded vertices because easy
     GL32.glGenVertexArrays(cookie);
     vaoModel = cookie[0];
     GL32.glBindVertexArray(vaoModel);
@@ -99,23 +102,22 @@ public class MahjongRenderer implements UILayer {
     GL32.glBindVertexArray(0);
 
     // Shader compilation
-    int tsh_vertex = GL32.glCreateShader(GL32.GL_VERTEX_SHADER);
-    int tsh_fragment = GL32.glCreateShader(GL32.GL_FRAGMENT_SHADER);
-    GL32.glShaderSource(tsh_vertex, Util.slurp(Util.ASSET_ROOT + "/vertex.glsl"));
-    GL32.glCompileShader(tsh_vertex);
-    GL32.glShaderSource(tsh_fragment, Util.slurp(Util.ASSET_ROOT + "/fragment.glsl"));
-    GL32.glCompileShader(tsh_fragment);
-    checkShaderCompile(tsh_vertex);
-    checkShaderCompile(tsh_fragment);
+    int tsh_vertex = shaderCompile(GL32.GL_VERTEX_SHADER, Util.ASSET_ROOT + "/vertex.glsl");
+    int tsh_fragment = shaderCompile(GL32.GL_FRAGMENT_SHADER, Util.ASSET_ROOT + "/fragment.glsl");
+    int tsh_raycast = shaderCompile(GL32.GL_FRAGMENT_SHADER, Util.ASSET_ROOT + "/raycast.glsl");
     program = GL32.glCreateProgram();
     GL32.glAttachShader(program, tsh_vertex);
     GL32.glAttachShader(program, tsh_fragment);
     GL32.glLinkProgram(program);
     checkProgramCompile(program);
+    raycastShaders = GL32.glCreateProgram();
+    GL32.glAttachShader(raycastShaders, tsh_vertex);
+    GL32.glAttachShader(raycastShaders, tsh_raycast);
+    GL32.glLinkProgram(raycastShaders);
+    checkProgramCompile(raycastShaders);
     GL32.glDeleteShader(tsh_vertex);
     GL32.glDeleteShader(tsh_fragment);
-    uniTransformMat = GL32.glGetUniformLocation(program, "uni_transform_mat");
-    uniTextureID = GL32.glGetUniformLocation(program, "uni_tex_id");
+    GL32.glDeleteShader(tsh_raycast);
 
     // Load texture
     int[] width = new int[1];
@@ -132,15 +134,40 @@ public class MahjongRenderer implements UILayer {
     GL32.glTexImage2D(GL32.GL_TEXTURE_2D, 0, GL32.GL_RGB, width[0], height[0], 0, GL32.GL_RGB, GL32.GL_UNSIGNED_BYTE, buf);
     STBImage.stbi_image_free(buf);
 
+    //TODO make this not here
     GLFW.glfwSetInputMode(wnd.getGlfw(), GLFW.GLFW_CURSOR, GLFW.GLFW_CURSOR_DISABLED);
+
+    // Framebuffer creation
+    GL32.glGenFramebuffers(cookie);
+    framebuffer = cookie[0];
+    GL32.glBindFramebuffer(GL32.GL_FRAMEBUFFER, framebuffer);
+    GL32.glGenTextures(cookie);
+    framebufferColor = cookie[0];
+    GL32.glGenTextures(cookie);
+    framebufferDepth = cookie[0];
+    GL32.glBindTexture(GL32.GL_TEXTURE_2D, framebufferColor);
+    GL32.glTexImage2D(GL32.GL_TEXTURE_2D, 0, GL32.GL_RGB, wnd.getWidth(), wnd.getHeight(), 0, GL32.GL_RGB, GL32.GL_UNSIGNED_BYTE, 0);
+    GL32.glTexParameteri(GL32.GL_TEXTURE_2D, GL32.GL_TEXTURE_WRAP_S, GL32.GL_REPEAT);
+    GL32.glTexParameteri(GL32.GL_TEXTURE_2D, GL32.GL_TEXTURE_WRAP_T, GL32.GL_REPEAT);
+    GL32.glTexParameteri(GL32.GL_TEXTURE_2D, GL32.GL_TEXTURE_MIN_FILTER, GL32.GL_LINEAR);
+    GL32.glTexParameteri(GL32.GL_TEXTURE_2D, GL32.GL_TEXTURE_MAG_FILTER, GL32.GL_LINEAR);
+    GL32.glFramebufferTexture2D(GL32.GL_FRAMEBUFFER, GL32.GL_COLOR_ATTACHMENT0, GL32.GL_TEXTURE_2D, framebufferColor, 0);
+    GL32.glBindTexture(GL32.GL_TEXTURE_2D, framebufferDepth);
+    GL32.glTexImage2D(GL32.GL_TEXTURE_2D, 0, GL32.GL_DEPTH24_STENCIL8, wnd.getWidth(), wnd.getHeight(), 0, GL32.GL_DEPTH_STENCIL, GL32.GL_UNSIGNED_INT_24_8, 0);
+    GL32.glFramebufferTexture2D(GL32.GL_FRAMEBUFFER, GL32.GL_DEPTH_STENCIL_ATTACHMENT, GL32.GL_TEXTURE_2D, framebufferDepth, 0);
+    GL32.glBindFramebuffer(GL32.GL_FRAMEBUFFER, 0);
   }
 
-  private static void checkShaderCompile(int shader) {
+  private static int shaderCompile(int type, String path) {
+    int shader = GL32.glCreateShader(type);
+    GL32.glShaderSource(shader, Util.slurp(path));
+    GL32.glCompileShader(shader);
     int[] cookie = new int[1];
     GL32.glGetShaderiv(shader, GL32.GL_COMPILE_STATUS, cookie);
     if(cookie[0] == 0) {
       throw new NativeLibraryException("Shader compilation failed: " + GL32.glGetShaderInfoLog(shader));
     }
+    return shader;
   }
 
   private static void checkProgramCompile(int program) {
@@ -186,9 +213,8 @@ public class MahjongRenderer implements UILayer {
     return "MahjongRenderer";
   }
 
-  private void renderHand(int i, MahjongHand hand) {
+  private void renderHand(int i, MahjongHand hand, boolean raycast, boolean highlightHand) {
     int tileIdx = 0;
-
     float[] buf = new float[16];
     for(MahjongTile tile : hand.getHidden()) {
       Matrix4f tmtModel = new Matrix4f()
@@ -200,9 +226,20 @@ public class MahjongRenderer implements UILayer {
           );
       tmtModel.get(buf);
       GL32.glBindVertexArray(vaoModel);
-      GL32.glUseProgram(program);
-      GL32.glUniformMatrix4fv(uniTransformMat, false, buf);
-      GL32.glUniform1i(uniTextureID, tile.getInternal());
+      if(!raycast) {
+        GL32.glUseProgram(program);
+        GL32.glUniformMatrix4fv(GL32.glGetUniformLocation(program, "uni_transform_mat"), false, buf);
+        GL32.glUniform1i(GL32.glGetUniformLocation(program, "uni_tex_id"), tile.getInternal());
+        if(tileIdx == hoveredTileIdx && highlightHand) {
+          GL32.glUniform1i(GL32.glGetUniformLocation(program, "uni_highlight"), 1);
+        } else {
+          GL32.glUniform1i(GL32.glGetUniformLocation(program, "uni_highlight"), 0);
+        }
+      } else {
+        GL32.glUseProgram(raycastShaders);
+        GL32.glUniformMatrix4fv(GL32.glGetUniformLocation(raycastShaders, "uni_transform_mat"), false, buf);
+        GL32.glUniform1i(GL32.glGetUniformLocation(raycastShaders, "uni_tile_idx"), tileIdx);
+      }
       GL32.glBindBuffer(GL32.GL_ELEMENT_ARRAY_BUFFER, eboModel);
       GL32.glBindTexture(GL32.GL_TEXTURE_2D, texMahjong);
       GL32.glDrawElements(GL32.GL_TRIANGLES, 36, GL32.GL_UNSIGNED_INT, 0);
@@ -222,9 +259,26 @@ public class MahjongRenderer implements UILayer {
     GL32.glClearColor(0.0f, 0.8f, 0.2f, 0.0f);
     GL32.glClear(GL32.GL_COLOR_BUFFER_BIT | GL32.GL_DEPTH_BUFFER_BIT);
 
+    GL32.glBindFramebuffer(GL32.GL_FRAMEBUFFER, 0);
     for(int i = 0; i < 4; i++) {
-      renderHand(i, state.getPlayerHands()[i]);
+      renderHand(i, state.getPlayerHands()[i], false, i == state.getMyPlayerId());
     }
+
+    GL32.glBindFramebuffer(GL32.GL_FRAMEBUFFER, framebuffer);
+    GL32.glClearColor(0.0f, 1.0f, 0.0f, 0.0f);
+    GL32.glClear(GL32.GL_COLOR_BUFFER_BIT | GL32.GL_DEPTH_BUFFER_BIT);
+    renderHand(state.getMyPlayerId(), state.getPlayerHands()[state.getMyPlayerId()], true, false);
+    ByteBuffer buf = ByteBuffer.allocateDirect(wnd.getWidth() * wnd.getHeight() * 3);
+    GL32.glBindTexture(GL32.GL_TEXTURE_2D, framebufferColor);
+    GL32.glGetTexImage(GL32.GL_TEXTURE_2D, 0, GL32.GL_RGB, GL32.GL_UNSIGNED_BYTE, buf);
+    long b = Integer.toUnsignedLong(buf.get((wnd.getWidth() / 2 + (wnd.getHeight() / 2) * wnd.getWidth()) * 3 + 1));
+    if(b >= 255) {
+      hoveredTileIdx = -1;
+    } else {
+      hoveredTileIdx = (int) (b / 4);
+    }
+
+    GL32.glBindFramebuffer(GL32.GL_FRAMEBUFFER, 0);
   }
 
   /**
@@ -236,5 +290,12 @@ public class MahjongRenderer implements UILayer {
     GL32.glDeleteBuffers(new int[] { vboModel, eboModel });
     GL32.glDeleteTextures(texMahjong);
     GL32.glDeleteVertexArrays(vaoModel);
+
+    GL32.glDeleteProgram(raycastShaders);
+    GL32.glDeleteFramebuffers(framebuffer);
+  }
+
+  public int getHoveredTileIndex() {
+    return hoveredTileIdx;
   }
 }
