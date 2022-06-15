@@ -16,6 +16,8 @@ import java.util.*;
  * Master class controlling the Mahjong game flow. Manages all the moves and state of the game.
  */
 public class MahjongGame {
+  public static int TIMEOUT = 99999999;
+
   /**
    * Represents all the state of one player.
    */
@@ -236,7 +238,7 @@ public class MahjongGame {
       }
 
       // Recieve main player action
-      Packet p = current.controller.receive(10000);
+      Packet p = current.controller.receive(TIMEOUT);
       synchronized (current) {
         if (p.getId() == DiscardTilePacket.ID) {
           DiscardTilePacket pDerived = (DiscardTilePacket)p;
@@ -257,7 +259,7 @@ public class MahjongGame {
       // Dealer gets priority on move, didn't want the order to be unspecified
       for(int i = 0, pl = dealer; i < 4; i++, pl = (pl + 1) % 4) {
         PlayerState considerPlayer = players[pl];
-        Packet p2 = considerPlayer.controller.receive(10000);
+        Packet p2 = considerPlayer.controller.receive(TIMEOUT);
         if(p2.getId() == NoActionPacket.ID) {
           continue;
         } //TODO impl ronnya

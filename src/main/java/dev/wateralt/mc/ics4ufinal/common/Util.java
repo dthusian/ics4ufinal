@@ -25,7 +25,11 @@ public class Util {
   /**
    * Returns the directory containing all asset files.
    */
-  public static String ASSET_ROOT = "assets/";
+  public static final String ASSET_ROOT = "assets/";
+
+  public static final int SIGNAL_START = 0;
+  public static final int SIGNAL_STOP = 1;
+  public static final int SIGNAL_SUSPEND = 2;
 
   /**
    * Reads all the contents of a file into a single string
@@ -52,7 +56,7 @@ public class Util {
   public static String byteBufReadString(ByteBuffer buf, int idx) {
     int length = buf.getInt(idx);
     byte[] strBuf = new byte[length];
-    buf.get(strBuf, idx + 4, length);
+    buf.get(idx + 4, strBuf, 0, length);
     return new String(strBuf);
   }
 
@@ -86,27 +90,32 @@ public class Util {
   }
 
   /**
-   * Converts a byte[] to a Byte[], so that it can be
-   * used in generic methods. I hate Java.
-   * @param arr The byte[]
-   * @return The Byte[]
-   */
-  public static Byte[] byteArrayToByteArray(byte[] arr) {
-    Byte[] arr2 = new Byte[arr.length];
-    for(int i = 0; i < arr.length; i++) {
-      arr2[i] = arr[i];
-    }
-    return arr2;
-  }
-
-  /**
    * Converts a byte buffer to hex representation.
    * @param buf The buffer to convert.
    * @return The converted buffer.
    */
   public static String byteBufToString(ByteBuffer buf) {
-    return Arrays.stream(Util.byteArrayToByteArray(buf.array()))
-        .map("%02x "::formatted)
-        .collect(Collectors.joining());
+    StringBuilder sb = new StringBuilder();
+    for(int i = 0; i < buf.limit(); i++) {
+       sb.append(String.format("%02x ", buf.get(i)));
+    }
+    return sb.toString();
+  }
+
+  /**
+   * How the fuck does Java manage to design yet another bad API look at how many Util methods
+   * deal with ByteBuffers and tell me that it shouldn't be burned to the ground and redesigned
+   *
+   * Converts a byte buffer to a byte array according to its offset and limit, not according to
+   * its underlying array (which is what .array() does)
+   * @param buf The buffer to convert
+   * @return The byte array
+   */
+  public static byte[] byteBufToByteArray(ByteBuffer buf) {
+    byte[] arr = new byte[buf.limit()];
+    for(int i = 0; i < arr.length; i++) {
+      arr[i] = buf.get(i);
+    }
+    return arr;
   }
 }

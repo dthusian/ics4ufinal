@@ -14,12 +14,14 @@ public class MahjongHand {
   private final ArrayList<MahjongTile> hidden;
   private final ArrayList<MahjongTile> hiddenKan;
   private final ArrayList<MahjongTile> shown;
+  private final ArrayList<MahjongTile> shownKan;
   private MahjongTile finalTile;
 
   public MahjongHand() {
     hidden = new ArrayList<>();
     hiddenKan = new ArrayList<>();
     shown = new ArrayList<>();
+    shownKan = new ArrayList<>();
     finalTile = MahjongTile.NULL;
   }
 
@@ -49,6 +51,10 @@ public class MahjongHand {
    */
   public ArrayList<MahjongTile> getShown() {
     return shown;
+  }
+
+  public ArrayList<MahjongTile> getShownKan() {
+    return shownKan;
   }
 
   /**
@@ -85,7 +91,7 @@ public class MahjongHand {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
     MahjongHand that = (MahjongHand) o;
-    return Objects.equals(hidden, that.hidden) && Objects.equals(hiddenKan, that.hiddenKan) && Objects.equals(shown, that.shown) && Objects.equals(finalTile, that.finalTile);
+    return Objects.equals(hidden, that.hidden) && Objects.equals(hiddenKan, that.hiddenKan) && Objects.equals(shown, that.shown) && Objects.equals(shownKan, that.shownKan) && Objects.equals(finalTile, that.finalTile);
   }
 
   @Override

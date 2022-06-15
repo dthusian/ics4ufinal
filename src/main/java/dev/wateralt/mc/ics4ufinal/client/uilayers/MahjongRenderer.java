@@ -40,9 +40,12 @@ public class MahjongRenderer implements UILayer {
   int raycastShaders;
   Matrix4f matView;
   Matrix4f matProjection;
+
   int framebuffer;
   int framebufferColor;
   int framebufferDepth;
+  ByteBuffer imageBuffer;
+  int frameCounter;
 
   /**
    * Normal constructor.
@@ -156,6 +159,8 @@ public class MahjongRenderer implements UILayer {
     GL32.glTexImage2D(GL32.GL_TEXTURE_2D, 0, GL32.GL_DEPTH24_STENCIL8, wnd.getWidth(), wnd.getHeight(), 0, GL32.GL_DEPTH_STENCIL, GL32.GL_UNSIGNED_INT_24_8, 0);
     GL32.glFramebufferTexture2D(GL32.GL_FRAMEBUFFER, GL32.GL_DEPTH_STENCIL_ATTACHMENT, GL32.GL_TEXTURE_2D, framebufferDepth, 0);
     GL32.glBindFramebuffer(GL32.GL_FRAMEBUFFER, 0);
+    imageBuffer = ByteBuffer.allocateDirect(wnd.getWidth() * wnd.getHeight() * 3);
+    frameCounter = 0;
   }
 
   private static int shaderCompile(int type, String path) {
@@ -264,19 +269,22 @@ public class MahjongRenderer implements UILayer {
       renderHand(i, state.getPlayerHands()[i], false, i == state.getMyPlayerId());
     }
 
-    GL32.glBindFramebuffer(GL32.GL_FRAMEBUFFER, framebuffer);
-    GL32.glClearColor(0.0f, 1.0f, 0.0f, 0.0f);
-    GL32.glClear(GL32.GL_COLOR_BUFFER_BIT | GL32.GL_DEPTH_BUFFER_BIT);
-    renderHand(state.getMyPlayerId(), state.getPlayerHands()[state.getMyPlayerId()], true, false);
-    ByteBuffer buf = ByteBuffer.allocateDirect(wnd.getWidth() * wnd.getHeight() * 3);
-    GL32.glBindTexture(GL32.GL_TEXTURE_2D, framebufferColor);
-    GL32.glGetTexImage(GL32.GL_TEXTURE_2D, 0, GL32.GL_RGB, GL32.GL_UNSIGNED_BYTE, buf);
-    long b = Integer.toUnsignedLong(buf.get((wnd.getWidth() / 2 + (wnd.getHeight() / 2) * wnd.getWidth()) * 3 + 1));
-    if(b >= 255) {
-      hoveredTileIdx = -1;
-    } else {
-      hoveredTileIdx = (int) (b / 4);
+    if(frameCounter % 10 == 0) {
+      GL32.glBindFramebuffer(GL32.GL_FRAMEBUFFER, framebuffer);
+      GL32.glClearColor(0.0f, 1.0f, 0.0f, 0.0f);
+      GL32.glClear(GL32.GL_COLOR_BUFFER_BIT | GL32.GL_DEPTH_BUFFER_BIT);
+      renderHand(state.getMyPlayerId(), state.getPlayerHands()[state.getMyPlayerId()], true, false);
+      GL32.glBindTexture(GL32.GL_TEXTURE_2D, framebufferColor);
+      GL32.glGetTexImage(GL32.GL_TEXTURE_2D, 0, GL32.GL_RGB, GL32.GL_UNSIGNED_BYTE, imageBuffer);
+      long b = Byte.toUnsignedLong(imageBuffer.get((wnd.getWidth() / 2 + (wnd.getHeight() / 2) * wnd.getWidth()) * 3 + 1));
+      if(b >= 255) {
+        hoveredTileIdx = -1;
+      } else {
+        hoveredTileIdx = (int) (b / 4);
+      }
     }
+
+    frameCounter++;
 
     GL32.glBindFramebuffer(GL32.GL_FRAMEBUFFER, 0);
   }
@@ -293,6 +301,7 @@ public class MahjongRenderer implements UILayer {
 
     GL32.glDeleteProgram(raycastShaders);
     GL32.glDeleteFramebuffers(framebuffer);
+    GL32.glDeleteTextures(new int[] { framebufferColor, framebufferDepth });
   }
 
   public int getHoveredTileIndex() {

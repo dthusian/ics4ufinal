@@ -2,6 +2,9 @@ package dev.wateralt.mc.ics4ufinal.client;
 
 import dev.wateralt.mc.ics4ufinal.common.MahjongHand;
 import dev.wateralt.mc.ics4ufinal.common.MahjongTile;
+import dev.wateralt.mc.ics4ufinal.common.network.DiscardTilePacket;
+import dev.wateralt.mc.ics4ufinal.common.network.GainTilePacket;
+import dev.wateralt.mc.ics4ufinal.common.network.Packet;
 
 import java.util.ArrayList;
 
@@ -13,9 +16,16 @@ import java.util.ArrayList;
  * by MahjongRenderer to render tiles and whatnot
  */
 public class MahjongClientState {
-  private MahjongHand[] playerHands;
+  public static class PlayerAction {
+    public static int NOTHING = 0;
+    public static int DISCARD_TILE = 1;
+    public static int CALL_TILE = 2;
+  }
+
+  private final MahjongHand[] playerHands;
   private ArrayList<ArrayList<MahjongTile>> playerDiscardPiles;
   private int myPlayerId;
+  private int playerAction;
 
   /**
    * Constructs a Client State with empty hands and discard piles
@@ -32,6 +42,7 @@ public class MahjongClientState {
     playerDiscardPiles.add(new ArrayList<>());
     playerDiscardPiles.add(new ArrayList<>());
     playerDiscardPiles.add(new ArrayList<>());
+    playerAction = PlayerAction.NOTHING;
   }
 
   /**
@@ -57,5 +68,35 @@ public class MahjongClientState {
    */
   public void setMyPlayerId(int myPlayerId) {
     this.myPlayerId = myPlayerId;
+  }
+
+  public int getPlayerAction() {
+    return playerAction;
+  }
+
+  public void setPlayerAction(int playerAction) {
+    this.playerAction = playerAction;
+  }
+
+  public MahjongHand getMyHand() {
+    return playerHands[myPlayerId];
+  }
+
+
+  public void handlePacket(Packet p) {
+    if(p.getId() == GainTilePacket.ID) {
+      GainTilePacket pDerived = (GainTilePacket)p;
+      playerHands[pDerived.getPlayer()].getHidden().add(pDerived.getTile());
+      // GainTile can only be shown to you
+      if(!pDerived.getTile().equals(MahjongTile.NULL)) {
+        myPlayerId = pDerived.getPlayer();
+      }
+      if(getMyHand().getLength() == 14) {
+        playerAction = PlayerAction.DISCARD_TILE;
+      }
+    } else if(p.getId() == DiscardTilePacket.ID) {
+      DiscardTilePacket pDerived = (DiscardTilePacket)p;
+      playerDiscardPiles.get(pDerived.getPlayer()).add(pDerived.getTile());
+    }
   }
 }

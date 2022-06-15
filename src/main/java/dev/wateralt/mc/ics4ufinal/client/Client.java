@@ -39,7 +39,7 @@ public class Client {
     clientState = new MahjongClientState();
     socket.connect(new InetSocketAddress(urlParts[0], Integer.parseInt(urlParts[1])));
     signal = new AtomicInteger();
-    signal.set(0);
+    signal.set(Util.SIGNAL_START);
     logs = new Logger(this);
     thread = new Thread(this::threadMain);
     thread.start();
@@ -64,33 +64,27 @@ public class Client {
 
   private void threadMain() {
     try {
-      socket.getOutputStream().write(Packet.serialize(new SelfNamePacket("Among Us")).array());
+      socket.getOutputStream().write(Util.byteBufToByteArray(Packet.serialize(new SelfNamePacket("Among Us"))));
       while(true) {
+        if(signal.get() == Util.SIGNAL_STOP) {
+          break;
+        } else if(signal.get() == Util.SIGNAL_SUSPEND) {
+          continue;
+        }
         ByteBuffer buf = Util.readSinglePacket(socket.getInputStream());
         if(Util.DEBUG) logs.info("Packet Received: %s", Util.debugPrintPacket(buf));
         Packet p = Packet.deserialize(buf);
         if(p == null) throw new IOException();
-        if(p.getId() == GainTilePacket.ID) {
-          GainTilePacket pDerived = (GainTilePacket)p;
-          synchronized (clientState) {
-            clientState.getPlayerHands()[pDerived.getPlayer()].getHidden().add(pDerived.getTile());
-            // GainTile can only be shown to you
-            if(!pDerived.getTile().equals(MahjongTile.NULL)) {
-              clientState.setMyPlayerId(pDerived.getPlayer());
-            }
-          }
-        } else if(p.getId() == DiscardTilePacket.ID) {
-          DiscardTilePacket pDerived = (DiscardTilePacket)p;
-          synchronized (clientState) {
-            clientState.getPlayerHands()[pDerived.getPlayer()].getHidden().add(pDerived.getTile());
-          }
-        }
-        if(signal.get() == 1) {
-          break;
+        synchronized (clientState) {
+          clientState.handlePacket(p);
         }
       }
     } catch(IOException ignored) {
     }
+  }
+
+  public void sendPacket(Packet p) throws IOException {
+    socket.getOutputStream().write(Util.byteBufToByteArray(Packet.serialize(p)));
   }
 
   /**
