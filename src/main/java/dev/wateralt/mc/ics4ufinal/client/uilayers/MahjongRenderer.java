@@ -14,6 +14,8 @@ import org.joml.Vector3f;
 import org.lwjgl.stb.STBImage;
 
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * <h2>Mahjong Renderer</h2>
@@ -22,6 +24,8 @@ import java.nio.ByteBuffer;
  * this part will be most difficult to understand. I'll try to add internal comments as much as possible.
  */
 public class MahjongRenderer implements UILayer {
+  private static final Vector3f cameraPos = new Vector3f(0.0f, 0.3f, -1.2f);
+
   // State
   MahjongClientState state;
 
@@ -61,8 +65,8 @@ public class MahjongRenderer implements UILayer {
   @Override
   public void initialize(Window wnd) {
     matView = new Matrix4f()
-        .translate(new Vector3f(0.0f, 0.0f, 1.0f));
-    matProjection = new Matrix4f().perspective((float) Math.toRadians(100), wnd.getWidth()/(float)wnd.getHeight(), 0.1f, 5.0f);
+        .translate(cameraPos);
+    matProjection = new Matrix4f().perspective((float) Math.toRadians(75), wnd.getWidth()/(float)wnd.getHeight(), 0.1f, 5.0f);
     int[] cookie = new int[1];
 
     // Model loading
@@ -194,7 +198,7 @@ public class MahjongRenderer implements UILayer {
   public boolean onMouseMove(Window wnd, double newX, double newY) {
     matView = new Matrix4f()
         .rotateXYZ((float) Math.toRadians(newY), -(float) Math.toRadians(newX), 0.0f)
-        .translate(new Vector3f(0.0f, 0.0f, -1.2f));
+        .translate(cameraPos);
     mouseX = newX;
     mouseY = newY;
     return false;
@@ -252,6 +256,30 @@ public class MahjongRenderer implements UILayer {
     }
   }
 
+  public void renderDiscard(int i, ArrayList<MahjongTile> discard) {
+    int tileIdx = 0;
+    float[] buf = new float[16];
+    for(MahjongTile tile : discard) {
+      Matrix4f tmtModel = new Matrix4f()
+          .mul(matProjection)
+          .mul(matView)
+          .mul(new Matrix4f()
+              .rotateY((float) Math.toRadians(i * 90.0f + 180.0f))
+              .translate(new Vector3f(0.08f * (tileIdx % 6) - (0.08f * 6) / 2, 0.3f - 0.02f, -0.3f - 0.10f * (float)Math.floor(tileIdx / 6.0f)))
+              .rotateX((float) Math.toRadians(-90.0f))
+          );
+      tmtModel.get(buf);
+      GL32.glUseProgram(program);
+      GL32.glUniformMatrix4fv(GL32.glGetUniformLocation(program, "uni_transform_mat"), false, buf);
+      GL32.glUniform1i(GL32.glGetUniformLocation(program, "uni_tex_id"), tile.getInternal());
+      GL32.glUniform1i(GL32.glGetUniformLocation(program, "uni_highlight"), 0);
+      GL32.glBindBuffer(GL32.GL_ELEMENT_ARRAY_BUFFER, eboModel);
+      GL32.glBindTexture(GL32.GL_TEXTURE_2D, texMahjong);
+      GL32.glDrawElements(GL32.GL_TRIANGLES, 36, GL32.GL_UNSIGNED_INT, 0);
+      tileIdx++;
+    }
+  }
+
   /**
    *
    * @param wnd The window to render to.
@@ -266,14 +294,19 @@ public class MahjongRenderer implements UILayer {
 
     GL32.glBindFramebuffer(GL32.GL_FRAMEBUFFER, 0);
     for(int i = 0; i < 4; i++) {
-      renderHand(i, state.getPlayerHands()[i], false, i == state.getMyPlayerId());
+      synchronized (state) {
+        renderHand(i, state.getPlayerHands()[i], false, i == state.getMyPlayerId());
+        renderDiscard(i, state.getPlayerDiscardPiles().get(i));
+      }
     }
 
     if(frameCounter % 10 == 0) {
       GL32.glBindFramebuffer(GL32.GL_FRAMEBUFFER, framebuffer);
       GL32.glClearColor(0.0f, 1.0f, 0.0f, 0.0f);
       GL32.glClear(GL32.GL_COLOR_BUFFER_BIT | GL32.GL_DEPTH_BUFFER_BIT);
-      renderHand(state.getMyPlayerId(), state.getPlayerHands()[state.getMyPlayerId()], true, false);
+      synchronized (state) {
+        renderHand(state.getMyPlayerId(), state.getPlayerHands()[state.getMyPlayerId()], true, false);
+      }
       GL32.glBindTexture(GL32.GL_TEXTURE_2D, framebufferColor);
       GL32.glGetTexImage(GL32.GL_TEXTURE_2D, 0, GL32.GL_RGB, GL32.GL_UNSIGNED_BYTE, imageBuffer);
       long b = Byte.toUnsignedLong(imageBuffer.get((wnd.getWidth() / 2 + (wnd.getHeight() / 2) * wnd.getWidth()) * 3 + 1));

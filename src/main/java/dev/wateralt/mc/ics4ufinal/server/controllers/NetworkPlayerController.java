@@ -102,13 +102,13 @@ public class NetworkPlayerController implements Controller {
   @Override
   public Packet receive(int timeout) {
     try {
-      for(int i = 0; i < 10; i++) {
+      for(int i = 0; i < timeout / 10; i++) {
         Packet p;
         synchronized (turnsPacketQueue) {
           p = turnsPacketQueue.poll();
         }
         if(p != null) return p;
-        Thread.sleep(timeout / 10);
+        Thread.sleep(10);
       }
     } catch (InterruptedException ignored) {
     }

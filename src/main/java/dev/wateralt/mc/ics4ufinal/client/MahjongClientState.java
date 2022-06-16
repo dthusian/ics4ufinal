@@ -7,6 +7,7 @@ import dev.wateralt.mc.ics4ufinal.common.network.GainTilePacket;
 import dev.wateralt.mc.ics4ufinal.common.network.Packet;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 
 /**
  * <h2>Client State</h2>
@@ -78,25 +79,14 @@ public class MahjongClientState {
     this.playerAction = playerAction;
   }
 
+  public ArrayList<ArrayList<MahjongTile>> getPlayerDiscardPiles() {
+    return playerDiscardPiles;
+  }
+
   public MahjongHand getMyHand() {
     return playerHands[myPlayerId];
   }
 
 
-  public void handlePacket(Packet p) {
-    if(p.getId() == GainTilePacket.ID) {
-      GainTilePacket pDerived = (GainTilePacket)p;
-      playerHands[pDerived.getPlayer()].getHidden().add(pDerived.getTile());
-      // GainTile can only be shown to you
-      if(!pDerived.getTile().equals(MahjongTile.NULL)) {
-        myPlayerId = pDerived.getPlayer();
-      }
-      if(getMyHand().getLength() == 14) {
-        playerAction = PlayerAction.DISCARD_TILE;
-      }
-    } else if(p.getId() == DiscardTilePacket.ID) {
-      DiscardTilePacket pDerived = (DiscardTilePacket)p;
-      playerDiscardPiles.get(pDerived.getPlayer()).add(pDerived.getTile());
-    }
-  }
+
 }

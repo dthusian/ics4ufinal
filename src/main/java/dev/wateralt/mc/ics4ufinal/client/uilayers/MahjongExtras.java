@@ -50,6 +50,7 @@ public class MahjongExtras implements UILayer {
         int hoveredTile = renderer.getHoveredTileIndex();
         if(hoveredTile < state.getMyHand().getHidden().size() && hoveredTile >= 0) {
           try {
+            state.setPlayerAction(MahjongClientState.PlayerAction.NOTHING);
             client.sendPacket(new DiscardTilePacket(state.getMyHand().getHidden().get(hoveredTile), state.getMyPlayerId()));
           } catch(IOException ignored) {
 

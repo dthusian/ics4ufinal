@@ -15,7 +15,7 @@ public class NullController implements Controller {
   int handSize;
   int playerId;
   MahjongTile lastTile;
-  Packet nextPacket;
+  Packet nextPacket = new NoActionPacket();
 
   /**
    *
@@ -34,10 +34,19 @@ public class NullController implements Controller {
   @Override
   public void send(Packet packet) {
     if(packet.getId() == GainTilePacket.ID) {
-      handSize++;
-      lastTile = ((GainTilePacket)packet).getTile();
-      if(handSize == 14) {
-        nextPacket = new DiscardTilePacket(lastTile, playerId);
+      GainTilePacket pDerived = (GainTilePacket) packet;
+      if(pDerived.getPlayer() == playerId) {
+        handSize++;
+        lastTile = pDerived.getTile();
+        if(handSize == 14) {
+          nextPacket = new DiscardTilePacket(lastTile, playerId);
+        }
+      }
+    } else if(packet.getId() == DiscardTilePacket.ID) {
+      DiscardTilePacket pDerived = (DiscardTilePacket) packet;
+      nextPacket = new NoActionPacket();
+      if(pDerived.getPlayer() == playerId) {
+        handSize--;
       }
     }
   }
@@ -51,6 +60,11 @@ public class NullController implements Controller {
   public Packet receive(int timeout) {
     Packet ret = nextPacket;
     nextPacket = new NoActionPacket();
+    try {
+      if(ret.getId() == NoActionPacket.ID) Thread.sleep(250);
+      else Thread.sleep(1000);
+    } catch(InterruptedException ignored) {
+    }
     return ret;
   }
 }

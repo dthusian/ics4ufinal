@@ -92,4 +92,9 @@ public class MahjongTile implements Comparable<MahjongTile> {
   public int compareTo(MahjongTile o) {
     return Integer.compare(this.getInternal(), o.getInternal());
   }
+
+  @Override
+  public String toString() {
+    return (number % 10) + Character.toString("mpsz".charAt(number / 10));
+  }
 }

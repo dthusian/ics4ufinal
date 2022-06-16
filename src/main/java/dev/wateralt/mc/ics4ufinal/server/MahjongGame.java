@@ -1,5 +1,6 @@
 package dev.wateralt.mc.ics4ufinal.server;
 
+import dev.wateralt.mc.ics4ufinal.common.Logger;
 import dev.wateralt.mc.ics4ufinal.common.MahjongHand;
 import dev.wateralt.mc.ics4ufinal.common.MahjongTile;
 import dev.wateralt.mc.ics4ufinal.common.network.DiscardTilePacket;
@@ -102,6 +103,7 @@ public class MahjongGame {
   Deque<MahjongTile> deck;
   PlayerState[] players;
   int dealer;
+  Logger logs;
 
   /**
    * Initializes a new game. The game needs players in order to begin.
@@ -110,6 +112,7 @@ public class MahjongGame {
     deck = new ArrayDeque<>();
     players = new PlayerState[4];
     dealer = 0;
+    logs = new Logger(this);
   }
 
   // Setup functions
@@ -166,12 +169,12 @@ public class MahjongGame {
     LinkedList<MahjongTile> genTiles = new LinkedList<>();
     for(int i = 0; i < 4; i++) {
       for(int j = 0; j < 9; j++) {
-        genTiles.add(new MahjongTile(i + 1, 'm'));
-        genTiles.add(new MahjongTile(i + 1, 'p'));
-        genTiles.add(new MahjongTile(i + 1, 's'));
+        genTiles.add(new MahjongTile(j + 1, 'm'));
+        genTiles.add(new MahjongTile(j + 1, 'p'));
+        genTiles.add(new MahjongTile(j + 1, 's'));
       }
       for(int j = 0; j < 7; j++) {
-        genTiles.add(new MahjongTile(i + 1, 'z'));
+        genTiles.add(new MahjongTile(j + 1, 'z'));
       }
     }
     deck.clear();
@@ -210,6 +213,7 @@ public class MahjongGame {
 
   // Player did something bad and is being un-alived
   private void unalivePlayer(PlayerState pl) {
+    logs.warn("Player made an invalid move!");
     pl.controller = new NullController();
   }
 
@@ -229,6 +233,7 @@ public class MahjongGame {
 
     int currentPlayerTurn = dealer;
     while(true) {
+      logs.info("Player %d's turn", currentPlayerTurn);
       PlayerState current = players[currentPlayerTurn];
       // Deal
       MahjongTile newTile = deck.remove();
@@ -236,6 +241,7 @@ public class MahjongGame {
         current.hand.getHidden().add(newTile);
         broadcastExcept(new GainTilePacket(MahjongTile.NULL, currentPlayerTurn), currentPlayerTurn, new GainTilePacket(newTile, currentPlayerTurn));
       }
+      logs.info("Gave player %d a tile", currentPlayerTurn);
 
       // Recieve main player action
       Packet p = current.controller.receive(TIMEOUT);
@@ -244,22 +250,27 @@ public class MahjongGame {
           DiscardTilePacket pDerived = (DiscardTilePacket)p;
           int index = current.hand.getHidden().indexOf(((DiscardTilePacket)p).getTile());
           if(index == -1 || pDerived.getPlayer() != currentPlayerTurn) {
+            logs.warn("Player %d submitted invalid move", currentPlayerTurn);
             unalivePlayer(current);
+            current.hand.getHidden().remove(0);
             continue;
           }
           current.hand.getHidden().remove(index);
           broadcast(p);
+          logs.info("Player %d discards %s", currentPlayerTurn, pDerived.getTile().toString());
         } else {
           unalivePlayer(current);
           continue;
         }
       }
 
+
       // Receive other player's reactions
       // Dealer gets priority on move, didn't want the order to be unspecified
       for(int i = 0, pl = dealer; i < 4; i++, pl = (pl + 1) % 4) {
         PlayerState considerPlayer = players[pl];
         Packet p2 = considerPlayer.controller.receive(TIMEOUT);
+        logs.info("Player %d passes", pl);
         if(p2.getId() == NoActionPacket.ID) {
           continue;
         } //TODO impl ronnya

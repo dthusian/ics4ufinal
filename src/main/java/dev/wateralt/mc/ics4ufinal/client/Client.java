@@ -3,15 +3,14 @@ package dev.wateralt.mc.ics4ufinal.client;
 import dev.wateralt.mc.ics4ufinal.common.Logger;
 import dev.wateralt.mc.ics4ufinal.common.MahjongTile;
 import dev.wateralt.mc.ics4ufinal.common.Util;
-import dev.wateralt.mc.ics4ufinal.common.network.DiscardTilePacket;
-import dev.wateralt.mc.ics4ufinal.common.network.GainTilePacket;
-import dev.wateralt.mc.ics4ufinal.common.network.Packet;
-import dev.wateralt.mc.ics4ufinal.common.network.SelfNamePacket;
+import dev.wateralt.mc.ics4ufinal.common.network.*;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -76,11 +75,42 @@ public class Client {
         Packet p = Packet.deserialize(buf);
         if(p == null) throw new IOException();
         synchronized (clientState) {
-          clientState.handlePacket(p);
+          handlePacket(p);
         }
       }
     } catch(IOException ignored) {
     }
+  }
+
+  public void handlePacket(Packet p) throws IOException {
+    if(p.getId() == GainTilePacket.ID) {
+      GainTilePacket pDerived = (GainTilePacket)p;
+      clientState.getPlayerHands()[pDerived.getPlayer()].getHidden().add(pDerived.getTile());
+      // GainTile can only be shown to you
+      if(!pDerived.getTile().equals(MahjongTile.NULL)) {
+        clientState.setMyPlayerId(pDerived.getPlayer());
+      }
+      if(clientState.getMyHand().getLength() == 14) {
+        clientState.setPlayerAction(MahjongClientState.PlayerAction.DISCARD_TILE);
+      }
+    } else if(p.getId() == DiscardTilePacket.ID) {
+      DiscardTilePacket pDerived = (DiscardTilePacket)p;
+      clientState.getPlayerDiscardPiles().get(pDerived.getPlayer()).add(pDerived.getTile());
+      if(pDerived.getPlayer() == clientState.getMyPlayerId()) {
+        clientState.getMyHand().getHidden().remove(pDerived.getTile());
+      } else {
+        ArrayList<MahjongTile> hidden = clientState.getPlayerHands()[pDerived.getPlayer()].getHidden();
+        hidden.remove(hidden.size() - 1);
+      }
+      if(pDerived.getPlayer() == clientState.getMyPlayerId()) {
+        sendPacket(new NoActionPacket());
+      } else {
+        //TODO pon
+        //clientState.setPlayerAction(MahjongClientState.PlayerAction.CALL_TILE);
+        sendPacket(new NoActionPacket());
+      }
+    }
+    clientState.getMyHand().getHidden().sort(Comparator.naturalOrder());
   }
 
   public void sendPacket(Packet p) throws IOException {
