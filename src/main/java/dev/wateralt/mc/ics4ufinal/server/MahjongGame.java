@@ -237,7 +237,7 @@ public class MahjongGame {
       PlayerState current = players[turn];
 
       // Deal
-      if(dontDealMe) {
+      if(!dontDealMe) {
         MahjongTile dealtTile = deck.remove();
         current.hand.getHidden().add(dealtTile);
         updatePlayerHand(turn);
@@ -262,6 +262,7 @@ public class MahjongGame {
           }
           current.hand.getHidden().remove(index);
           broadcast(p);
+          updatePlayerHand(turn);
           logs.info("Player %d discards %s", turn, discardedTile.toString());
         } else {
           unalivePlayer(current);

@@ -100,6 +100,9 @@ public class Client {
       UpdateHandPacket pDerived = (UpdateHandPacket) p;
       if(!pDerived.getHand().getHidden().get(0).equals(MahjongTile.NULL)) clientState.setMyPlayerId(pDerived.getPlayerId());
       clientState.getPlayerHands()[pDerived.getPlayerId()] = pDerived.getHand();
+      if(pDerived.getPlayerId() == clientState.getMyPlayerId()) {
+        clientState.setPlayerAction(MahjongClientState.PlayerAction.DISCARD_TILE);
+      }
     }
     clientState.getMyHand().getHidden().sort(Comparator.naturalOrder());
   }
