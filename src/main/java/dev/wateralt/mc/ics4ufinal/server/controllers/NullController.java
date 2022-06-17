@@ -2,9 +2,9 @@ package dev.wateralt.mc.ics4ufinal.server.controllers;
 
 import dev.wateralt.mc.ics4ufinal.common.MahjongTile;
 import dev.wateralt.mc.ics4ufinal.common.network.DiscardTilePacket;
-import dev.wateralt.mc.ics4ufinal.common.network.GainTilePacket;
 import dev.wateralt.mc.ics4ufinal.common.network.NoActionPacket;
 import dev.wateralt.mc.ics4ufinal.common.network.Packet;
+import dev.wateralt.mc.ics4ufinal.common.network.UpdateHandPacket;
 import dev.wateralt.mc.ics4ufinal.server.MahjongGame;
 
 /**
@@ -12,7 +12,6 @@ import dev.wateralt.mc.ics4ufinal.server.MahjongGame;
  * Controllers are replaced by the dummy controller if they disconnect.
  */
 public class NullController implements Controller {
-  int handSize;
   int playerId;
   MahjongTile lastTile;
   Packet nextPacket = new NoActionPacket();
@@ -33,21 +32,16 @@ public class NullController implements Controller {
    */
   @Override
   public void send(Packet packet) {
-    if(packet.getId() == GainTilePacket.ID) {
-      GainTilePacket pDerived = (GainTilePacket) packet;
-      if(pDerived.getPlayer() == playerId) {
-        handSize++;
-        lastTile = pDerived.getTile();
-        if(handSize == 14) {
-          nextPacket = new DiscardTilePacket(lastTile, playerId);
+    if(packet.getId() == UpdateHandPacket.ID) {
+      UpdateHandPacket pDerived = (UpdateHandPacket) packet;
+      if(pDerived.getPlayerId() == playerId) {
+        if(pDerived.getHand().getLength() == 14) {
+          nextPacket = new DiscardTilePacket(pDerived.getHand().getHidden().get(0), playerId);
         }
       }
     } else if(packet.getId() == DiscardTilePacket.ID) {
       DiscardTilePacket pDerived = (DiscardTilePacket) packet;
       nextPacket = new NoActionPacket();
-      if(pDerived.getPlayer() == playerId) {
-        handSize--;
-      }
     }
   }
 

@@ -9,7 +9,7 @@ import java.nio.ByteBuffer;
  * This packet has no fields.
  */
 public class NoActionPacket extends Packet {
-  public static int ID = 202;
+  public static int ID = 203;
 
   /**
    * Constructs an empty packet

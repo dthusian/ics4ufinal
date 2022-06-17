@@ -1,7 +1,10 @@
 package dev.wateralt.mc.ics4ufinal.common;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 /**
  * Contains all the information of a Mahjong Hand.
@@ -14,14 +17,12 @@ public class MahjongHand {
   private final ArrayList<MahjongTile> hidden;
   private final ArrayList<MahjongTile> hiddenKan;
   private final ArrayList<MahjongTile> shown;
-  private final ArrayList<MahjongTile> shownKan;
   private MahjongTile finalTile;
 
   public MahjongHand() {
     hidden = new ArrayList<>();
     hiddenKan = new ArrayList<>();
     shown = new ArrayList<>();
-    shownKan = new ArrayList<>();
     finalTile = MahjongTile.NULL;
   }
 
@@ -53,10 +54,6 @@ public class MahjongHand {
     return shown;
   }
 
-  public ArrayList<MahjongTile> getShownKan() {
-    return shownKan;
-  }
-
   /**
    *
    * @return the final tile (agari) that the player has won with.
@@ -81,6 +78,78 @@ public class MahjongHand {
     return hidden.size() + hiddenKan.size() + shown.size() + (finalTile.equals(MahjongTile.NULL) ? 0 : 1);
   }
 
+  public boolean canPon(MahjongTile t) {
+    return hidden.stream().filter(v -> v.equals(t)).count() >= 2;
+  }
+
+  public void doPon(MahjongTile t) {
+    for(int i = 0; i < 2; i++) hidden.remove(t);
+    for(int i = 0; i < 3; i++) shown.add(t);
+  }
+
+  public boolean canKan(MahjongTile t) {
+    return hidden.stream().filter(v -> v.equals(t)).count() >= 3;
+  }
+
+  // Do not remove the tile from hidden before you pass it to these functions
+
+  public void doKanFromExternalTile(MahjongTile t) {
+    for(int i = 0; i < 3; i++) hidden.remove(t);
+    for(int i = 0; i < 4; i++) shown.add(t);
+  }
+
+  public void doHiddenKan(MahjongTile t) {
+    for(int i = 0; i < 4; i++) hidden.remove(t);
+    for(int i = 0; i < 4; i++) hiddenKan.add(t);
+  }
+
+  public void doKanToUpdatePon(MahjongTile t) {
+    hidden.remove(t);
+  }
+
+  public boolean canChi(MahjongTile t) {
+    if(t.getSuit() == 'z') return false;
+    int n = t.getNumber();
+    // These initial values will never be read but Java is too dumb to know that
+    boolean m2 = false, m1 = false, p1 = false, p2 = false;
+    if(n >= 3) {
+      m2 = hidden.contains(new MahjongTile(n - 2, t.getSuit()));
+    }
+    if(n >= 2) {
+      m1 = hidden.contains(new MahjongTile(n - 1, t.getSuit()));
+    }
+    if(n <= 8) {
+      p1 = hidden.contains(new MahjongTile(n + 1, t.getSuit()));
+    }
+    if(n <= 7) {
+      p2 = hidden.contains(new MahjongTile(n + 2, t.getSuit()));
+    }
+    if(n == 1) {
+      return p1 && p2;
+    }
+    if(n == 2) {
+      return (m1 && p1) || (p1 && p2);
+    }
+    if(n == 8) {
+      return (m1 && p1) || (m1 && m2);
+    }
+    if(n == 9) {
+      return m1 && m2;
+    }
+    return (m1 && m2) || (m1 && p1) || (p1 && p2);
+  }
+
+  public boolean canChi(MahjongTile[] t) {
+    if(t.length != 3) return false;
+    return Arrays.stream(t).filter(v -> hidden.contains(v)).count() >= 2;
+  }
+
+  public void doChi(MahjongTile[] t) {
+    Arrays.sort(t);
+    hidden.removeAll(List.of(t));
+    shown.addAll(List.of(t));
+  }
+
   /**
    * Checks equality with another mahjong hand.
    * @param o The other mahjong hand.
@@ -91,7 +160,7 @@ public class MahjongHand {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
     MahjongHand that = (MahjongHand) o;
-    return Objects.equals(hidden, that.hidden) && Objects.equals(hiddenKan, that.hiddenKan) && Objects.equals(shown, that.shown) && Objects.equals(shownKan, that.shownKan) && Objects.equals(finalTile, that.finalTile);
+    return Objects.equals(hidden, that.hidden) && Objects.equals(hiddenKan, that.hiddenKan) && Objects.equals(shown, that.shown) && Objects.equals(finalTile, that.finalTile);
   }
 
   @Override

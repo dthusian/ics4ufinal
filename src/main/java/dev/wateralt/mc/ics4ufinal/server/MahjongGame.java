@@ -3,10 +3,7 @@ package dev.wateralt.mc.ics4ufinal.server;
 import dev.wateralt.mc.ics4ufinal.common.Logger;
 import dev.wateralt.mc.ics4ufinal.common.MahjongHand;
 import dev.wateralt.mc.ics4ufinal.common.MahjongTile;
-import dev.wateralt.mc.ics4ufinal.common.network.DiscardTilePacket;
-import dev.wateralt.mc.ics4ufinal.common.network.GainTilePacket;
-import dev.wateralt.mc.ics4ufinal.common.network.NoActionPacket;
-import dev.wateralt.mc.ics4ufinal.common.network.Packet;
+import dev.wateralt.mc.ics4ufinal.common.network.*;
 import dev.wateralt.mc.ics4ufinal.server.controllers.Controller;
 import dev.wateralt.mc.ics4ufinal.server.controllers.NullController;
 
@@ -217,6 +214,10 @@ public class MahjongGame {
     pl.controller = new NullController();
   }
 
+  private void updatePlayerHand(int j) {
+    broadcastExcept(new UpdateHandPacket(players[j].hand, j, true), j, new UpdateHandPacket(players[j].hand, j, false));
+  }
+
   /**
    * Starts the game! Blocks the calling thread until the game is finished.
    */
@@ -225,45 +226,50 @@ public class MahjongGame {
     Instant timeSeed = Instant.now();
     createDeckAndDeal(timeSeed.getEpochSecond() ^ timeSeed.getNano());
     // Send tiles to all players
-    for(int j = 0; j < 4; j++) { // Send packets about player j's hand
-      for(int k = 0; k < players[j].hand.getHidden().size(); k++) { // Send tile k
-        broadcastExcept(new GainTilePacket(MahjongTile.NULL, j), j, new GainTilePacket(players[j].hand.getHidden().get(k), j));
-      }
+    for(int j = 0; j < 4; j++) {
+      updatePlayerHand(j);
     }
 
-    int currentPlayerTurn = dealer;
+    int turn = dealer;
+    boolean dontDealMe = false;
     while(true) {
-      logs.info("Player %d's turn", currentPlayerTurn);
-      PlayerState current = players[currentPlayerTurn];
+      logs.info("Player %d's turn", turn);
+      PlayerState current = players[turn];
+
       // Deal
-      MahjongTile newTile = deck.remove();
-      synchronized (current) {
-        current.hand.getHidden().add(newTile);
-        broadcastExcept(new GainTilePacket(MahjongTile.NULL, currentPlayerTurn), currentPlayerTurn, new GainTilePacket(newTile, currentPlayerTurn));
+      if(dontDealMe) {
+        MahjongTile dealtTile = deck.remove();
+        current.hand.getHidden().add(dealtTile);
+        updatePlayerHand(turn);
+        logs.info("Gave player %d a tile", turn);
+      } else {
+        logs.info("Player %d got a tile from other means", turn);
       }
-      logs.info("Gave player %d a tile", currentPlayerTurn);
+      dontDealMe = false;
 
       // Recieve main player action
       Packet p = current.controller.receive(TIMEOUT);
+      MahjongTile discardedTile;
       synchronized (current) {
         if (p.getId() == DiscardTilePacket.ID) {
           DiscardTilePacket pDerived = (DiscardTilePacket)p;
-          int index = current.hand.getHidden().indexOf(((DiscardTilePacket)p).getTile());
-          if(index == -1 || pDerived.getPlayer() != currentPlayerTurn) {
-            logs.warn("Player %d submitted invalid move", currentPlayerTurn);
+          discardedTile = pDerived.getTile();
+          int index = current.hand.getHidden().indexOf(discardedTile);
+          if(index == -1 || pDerived.getPlayer() != turn) {
             unalivePlayer(current);
             current.hand.getHidden().remove(0);
             continue;
           }
           current.hand.getHidden().remove(index);
           broadcast(p);
-          logs.info("Player %d discards %s", currentPlayerTurn, pDerived.getTile().toString());
+          logs.info("Player %d discards %s", turn, discardedTile.toString());
         } else {
           unalivePlayer(current);
+          turn++;
+          turn %= 4;
           continue;
         }
       }
-
 
       // Receive other player's reactions
       // Dealer gets priority on move, didn't want the order to be unspecified
@@ -273,12 +279,37 @@ public class MahjongGame {
         logs.info("Player %d passes", pl);
         if(p2.getId() == NoActionPacket.ID) {
           continue;
-        } //TODO impl ronnya
+        } else if(p2.getId() == PonPacket.ID) {
+          if(!considerPlayer.hand.canPon(discardedTile)) {
+            unalivePlayer(current);
+          } else {
+            current.hand.doPon(discardedTile);
+            updatePlayerHand(pl);
+            dontDealMe = true;
+            turn = pl;
+            break;
+          }
+        } else if(p2.getId() == ChiPacket.ID) {
+          ChiPacket p2derived = (ChiPacket) p2;
+          if(!considerPlayer.hand.canChi(p2derived.getTiles())) {
+            unalivePlayer(current);
+          } else {
+            current.hand.doChi(p2derived.getTiles());
+            updatePlayerHand(pl);
+            dontDealMe = true;
+            turn = pl;
+            break;
+          }
+        }
+      }
+      // Means the player has called a tile from another source, don't increment counter
+      if(dontDealMe) {
+        continue;
       }
 
       // Next player turn
-      currentPlayerTurn++;
-      currentPlayerTurn %= 4;
+      turn++;
+      turn %= 4;
     }
   }
 

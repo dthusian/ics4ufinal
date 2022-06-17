@@ -2,12 +2,8 @@ package dev.wateralt.mc.ics4ufinal.client;
 
 import dev.wateralt.mc.ics4ufinal.common.MahjongHand;
 import dev.wateralt.mc.ics4ufinal.common.MahjongTile;
-import dev.wateralt.mc.ics4ufinal.common.network.DiscardTilePacket;
-import dev.wateralt.mc.ics4ufinal.common.network.GainTilePacket;
-import dev.wateralt.mc.ics4ufinal.common.network.Packet;
 
 import java.util.ArrayList;
-import java.util.Comparator;
 
 /**
  * <h2>Client State</h2>

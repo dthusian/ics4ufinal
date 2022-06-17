@@ -11,7 +11,6 @@ import java.net.Socket;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -83,25 +82,9 @@ public class Client {
   }
 
   public void handlePacket(Packet p) throws IOException {
-    if(p.getId() == GainTilePacket.ID) {
-      GainTilePacket pDerived = (GainTilePacket)p;
-      clientState.getPlayerHands()[pDerived.getPlayer()].getHidden().add(pDerived.getTile());
-      // GainTile can only be shown to you
-      if(!pDerived.getTile().equals(MahjongTile.NULL)) {
-        clientState.setMyPlayerId(pDerived.getPlayer());
-      }
-      if(clientState.getMyHand().getLength() == 14) {
-        clientState.setPlayerAction(MahjongClientState.PlayerAction.DISCARD_TILE);
-      }
-    } else if(p.getId() == DiscardTilePacket.ID) {
+    if(p.getId() == DiscardTilePacket.ID) {
       DiscardTilePacket pDerived = (DiscardTilePacket)p;
       clientState.getPlayerDiscardPiles().get(pDerived.getPlayer()).add(pDerived.getTile());
-      if(pDerived.getPlayer() == clientState.getMyPlayerId()) {
-        clientState.getMyHand().getHidden().remove(pDerived.getTile());
-      } else {
-        ArrayList<MahjongTile> hidden = clientState.getPlayerHands()[pDerived.getPlayer()].getHidden();
-        hidden.remove(hidden.size() - 1);
-      }
       if(pDerived.getPlayer() == clientState.getMyPlayerId()) {
         sendPacket(new NoActionPacket());
       } else {
@@ -109,6 +92,14 @@ public class Client {
         //clientState.setPlayerAction(MahjongClientState.PlayerAction.CALL_TILE);
         sendPacket(new NoActionPacket());
       }
+    } else if(p.getId() == UndiscardTilePacket.ID) {
+      UndiscardTilePacket pDerived = (UndiscardTilePacket) p;
+      ArrayList<MahjongTile> discard = clientState.getPlayerDiscardPiles().get(pDerived.getPlayerId());
+      discard.remove(discard.size() - 1);
+    } else if(p.getId() == UpdateHandPacket.ID) {
+      UpdateHandPacket pDerived = (UpdateHandPacket) p;
+      if(!pDerived.getHand().getHidden().get(0).equals(MahjongTile.NULL)) clientState.setMyPlayerId(pDerived.getPlayerId());
+      clientState.getPlayerHands()[pDerived.getPlayerId()] = pDerived.getHand();
     }
     clientState.getMyHand().getHidden().sort(Comparator.naturalOrder());
   }

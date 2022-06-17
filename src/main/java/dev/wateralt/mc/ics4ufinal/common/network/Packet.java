@@ -1,7 +1,5 @@
 package dev.wateralt.mc.ics4ufinal.common.network;
 
-import dev.wateralt.mc.ics4ufinal.common.Util;
-
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
@@ -77,18 +75,36 @@ public abstract class Packet {
     if(type == SelfNamePacket.ID) {
       p = new SelfNamePacket();
       p.deserializeInternal(bytes.slice(8, length));
-    } else if(type == GainTilePacket.ID) {
-      p = new GainTilePacket();
-      p.deserializeInternal(bytes.slice(8, length));
     } else if(type == DiscardTilePacket.ID) {
       p = new DiscardTilePacket();
+      p.deserializeInternal(bytes.slice(8, length));
+    } else if(type == UndiscardTilePacket.ID) {
+      p = new UndiscardTilePacket();
+      p.deserializeInternal(bytes.slice(8, length));
+    } else if(type == UpdateHandPacket.ID) {
+      p = new UpdateHandPacket();
       p.deserializeInternal(bytes.slice(8, length));
     } else if(type == NoActionPacket.ID) {
       p = new NoActionPacket();
       p.deserializeInternal(bytes.slice(8, length)); // This LOC is the most useless one in the codebase
+    } else if(type == PonPacket.ID) {
+      p = new PonPacket();
+      p.deserializeInternal(bytes.slice(8, length));
+    } else if(type == ChiPacket.ID) {
+      p = new ChiPacket();
+      p.deserializeInternal(bytes.slice(8, length));
     } else {
       return null;
     }
     return p;
   }
 }
+
+/*
+200 -> DiscardTilePacket
+201 -> UndiscardTilePacket
+202 -> UpdateHandPacket
+203 -> NoActionPacket
+204 -> PonPacket
+205 -> ChiPacket
+*/

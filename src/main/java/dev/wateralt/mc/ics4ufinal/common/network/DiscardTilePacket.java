@@ -9,7 +9,7 @@ import java.nio.ByteBuffer;
  * or by the server to indicate that a client has discarded a tile.
  */
 public class DiscardTilePacket extends BasicTilePacket {
-  public static final int ID = 201;
+  public static final int ID = 200;
 
   /**
    * Alias of BasicTilePacket constructor
