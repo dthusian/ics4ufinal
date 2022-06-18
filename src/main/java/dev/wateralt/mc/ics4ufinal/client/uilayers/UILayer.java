@@ -65,6 +65,10 @@ public interface UILayer {
     return true;
   }
 
+  default boolean onKeyPress(Window wnd, int key) {
+    return true;
+  }
+
   /**
    * Called when the layer is removed from the stack, to release its resources.
    */

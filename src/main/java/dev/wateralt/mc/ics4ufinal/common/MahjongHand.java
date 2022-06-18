@@ -1,9 +1,6 @@
 package dev.wateralt.mc.ics4ufinal.common;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -137,6 +134,49 @@ public class MahjongHand {
       return m1 && m2;
     }
     return (m1 && m2) || (m1 && p1) || (p1 && p2);
+  }
+
+  public HashMap<MahjongTile, MahjongTile[]> getChi(MahjongTile t) {
+    if(t.getSuit() == 'z') return new HashMap<>();
+    int n = t.getNumber();
+    // These initial values will never be read but Java is too dumb to know that
+    boolean m2 = false, m1 = false, p1 = false, p2 = false;
+    if(n >= 3) {
+      m2 = hidden.contains(new MahjongTile(n - 2, t.getSuit()));
+    }
+    if(n >= 2) {
+      m1 = hidden.contains(new MahjongTile(n - 1, t.getSuit()));
+    }
+    if(n <= 8) {
+      p1 = hidden.contains(new MahjongTile(n + 1, t.getSuit()));
+    }
+    if(n <= 7) {
+      p2 = hidden.contains(new MahjongTile(n + 2, t.getSuit()));
+    }
+
+    HashMap<MahjongTile, MahjongTile[]> chis = new HashMap<>();
+    if(n < 8 && p1 && p2) {
+      chis.put(new MahjongTile(n + 2, t.getSuit()), new MahjongTile[] {
+          t,
+          new MahjongTile(n + 1, t.getSuit()),
+          new MahjongTile(n + 2, t.getSuit())
+      });
+    }
+    if(n < 9 && n > 1 && p1 && m1) {
+      chis.put(new MahjongTile(n + 1), new MahjongTile[] {
+          new MahjongTile(n - 1, t.getSuit()),
+          t,
+          new MahjongTile(n + 1, t.getSuit())
+      });
+    }
+    if(n > 2 && m1 && m2) {
+      chis.put(new MahjongTile(n - 2, t.getSuit()), new MahjongTile[] {
+          new MahjongTile(n - 2, t.getSuit()),
+          new MahjongTile(n - 1, t.getSuit()),
+          t
+      });
+    }
+    return chis;
   }
 
   public boolean canChi(MahjongTile[] t) {

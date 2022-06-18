@@ -88,9 +88,14 @@ public class Client {
       if(pDerived.getPlayer() == clientState.getMyPlayerId()) {
         sendPacket(new NoActionPacket());
       } else {
-        //TODO pon
-        //clientState.setPlayerAction(MahjongClientState.PlayerAction.CALL_TILE);
-        sendPacket(new NoActionPacket());
+        ClientCallOptions callOptions = new ClientCallOptions(clientState.getMyHand(), pDerived.getTile());
+        if(callOptions.canCall()) {
+          clientState.setCallOptions(callOptions);
+          clientState.setPlayerAction(MahjongClientState.PlayerAction.CALL_TILE);
+          logs.info("Player can call, waiting for action");
+        } else {
+          sendPacket(new NoActionPacket());
+        }
       }
     } else if(p.getId() == UndiscardTilePacket.ID) {
       UndiscardTilePacket pDerived = (UndiscardTilePacket) p;
@@ -107,8 +112,10 @@ public class Client {
     clientState.getMyHand().getHidden().sort(Comparator.naturalOrder());
   }
 
-  public void sendPacket(Packet p) throws IOException {
-    socket.getOutputStream().write(Util.byteBufToByteArray(Packet.serialize(p)));
+  public void sendPacket(Packet p) {
+    try {
+      socket.getOutputStream().write(Util.byteBufToByteArray(Packet.serialize(p)));
+    } catch(IOException ignored) { }
   }
 
   /**

@@ -3,7 +3,14 @@ package dev.wateralt.mc.ics4ufinal.client.uilayers;
 import dev.wateralt.mc.ics4ufinal.client.Client;
 import dev.wateralt.mc.ics4ufinal.client.MahjongClientState;
 import dev.wateralt.mc.ics4ufinal.client.Window;
+import dev.wateralt.mc.ics4ufinal.common.MahjongTile;
+import dev.wateralt.mc.ics4ufinal.common.Util;
+import dev.wateralt.mc.ics4ufinal.common.network.ChiPacket;
 import dev.wateralt.mc.ics4ufinal.common.network.DiscardTilePacket;
+import dev.wateralt.mc.ics4ufinal.common.network.PonPacket;
+import org.lwjgl.glfw.GLFW;
+import org.lwjgl.nanovg.NVGColor;
+import org.lwjgl.nanovg.NanoVG;
 
 import java.io.IOException;
 
@@ -15,6 +22,7 @@ public class MahjongExtras implements UILayer {
   MahjongClientState state;
   Client client;
   MahjongRenderer renderer;
+  int font;
 
   @Override
   public String getId() {
@@ -23,7 +31,7 @@ public class MahjongExtras implements UILayer {
 
   @Override
   public void initialize(Window wnd) {
-
+    font = NanoVG.nvgCreateFont(wnd.getNanoVG(), "SourceSansPro", Util.ASSET_ROOT + "/SourceSansPro-Regular.ttf");
   }
 
   public void setRenderer(MahjongRenderer renderer) {
@@ -41,6 +49,28 @@ public class MahjongExtras implements UILayer {
   @Override
   public void render(Window wnd) {
 
+    NVGColor col = NVGColor.malloc().r(0.0f).g(0.0f).b(1.0f).a(1.0f);
+    NanoVG.nvgBeginFrame(wnd.getNanoVG(), (float) wnd.getWidth(), (float) wnd.getHeight(), (float) wnd.getDpi());
+    NanoVG.nvgFillColor(wnd.getNanoVG(), col);
+    NanoVG.nvgStrokeColor(wnd.getNanoVG(), col);
+    NanoVG.nvgFontFaceId(wnd.getNanoVG(), font);
+    NanoVG.nvgFontSize(wnd.getNanoVG(), 40);
+    synchronized (state) {
+      if (state.getPlayerAction() == MahjongClientState.PlayerAction.CALL_TILE) {
+        if (state.getCallOptions().canPon()) {
+          NanoVG.nvgText(wnd.getNanoVG(), 50, wnd.getHeight() - 200, "[Q] Pon");
+        }
+        if (state.getCallOptions().getChiList().size() > 0) {
+          NanoVG.nvgText(wnd.getNanoVG(), 50, wnd.getHeight() - 150, "[W] Chi");
+        }
+      } else if(state.getPlayerAction() == MahjongClientState.PlayerAction.SELECT_CHI) {
+        NanoVG.nvgTextAlign(wnd.getNanoVG(), NanoVG.NVG_ALIGN_CENTER);
+        NanoVG.nvgText(wnd.getNanoVG(), wnd.getWidth() / 2, wnd.getHeight() - 500, "Select a tile to chi");
+        NanoVG.nvgTextAlign(wnd.getNanoVG(), NanoVG.NVG_ALIGN_LEFT);
+      }
+    }
+    NanoVG.nvgEndFrame(wnd.getNanoVG());
+    col.free();
   }
 
   @Override
@@ -49,13 +79,31 @@ public class MahjongExtras implements UILayer {
       if(state.getPlayerAction() == MahjongClientState.PlayerAction.DISCARD_TILE) {
         int hoveredTile = renderer.getHoveredTileIndex();
         if(hoveredTile < state.getMyHand().getHidden().size() && hoveredTile >= 0) {
-          try {
-            state.setPlayerAction(MahjongClientState.PlayerAction.NOTHING);
-            client.sendPacket(new DiscardTilePacket(state.getMyHand().getHidden().get(hoveredTile), state.getMyPlayerId()));
-          } catch(IOException ignored) {
-
-          }
+          state.setPlayerAction(MahjongClientState.PlayerAction.NOTHING);
+          client.sendPacket(new DiscardTilePacket(state.getMyHand().getHidden().get(hoveredTile), state.getMyPlayerId()));
         }
+      } else if(state.getPlayerAction() == MahjongClientState.PlayerAction.SELECT_CHI) {
+        int hoveredTile = renderer.getHoveredTileIndex();
+        MahjongTile[] wantChi = state.getCallOptions().getChiList().get(state.getMyHand().getHidden().get(hoveredTile));
+        if(wantChi != null) {
+          state.setCallOptions(null);
+          state.setPlayerAction(MahjongClientState.PlayerAction.NOTHING);
+          client.sendPacket(new ChiPacket(wantChi, state.getMyPlayerId()));
+        }
+      }
+    }
+    return false;
+  }
+
+  @Override
+  public boolean onKeyPress(Window wnd, int key) {
+    synchronized (state) {
+      if(key == GLFW.GLFW_KEY_Q) {
+        state.setPlayerAction(MahjongClientState.PlayerAction.NOTHING);
+        state.setCallOptions(null);
+        client.sendPacket(new PonPacket());
+      } else if(key == GLFW.GLFW_KEY_W) {
+        state.setPlayerAction(MahjongClientState.PlayerAction.SELECT_CHI);
       }
     }
     return false;

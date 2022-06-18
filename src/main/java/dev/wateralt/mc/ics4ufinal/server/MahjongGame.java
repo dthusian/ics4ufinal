@@ -3,6 +3,7 @@ package dev.wateralt.mc.ics4ufinal.server;
 import dev.wateralt.mc.ics4ufinal.common.Logger;
 import dev.wateralt.mc.ics4ufinal.common.MahjongHand;
 import dev.wateralt.mc.ics4ufinal.common.MahjongTile;
+import dev.wateralt.mc.ics4ufinal.common.Util;
 import dev.wateralt.mc.ics4ufinal.common.network.*;
 import dev.wateralt.mc.ics4ufinal.server.controllers.Controller;
 import dev.wateralt.mc.ics4ufinal.server.controllers.NullController;
@@ -180,6 +181,37 @@ public class MahjongGame {
       int idx = rand.nextInt(genTiles.size());
       deck.add(genTiles.remove(idx));
     }
+    if(Util.DEBUG) {
+      ArrayList<MahjongTile> tmp = new ArrayList<>();
+      deck.remove(new MahjongTile("1m"));
+      deck.remove(new MahjongTile("1m"));
+      deck.remove(new MahjongTile("2m"));
+      deck.remove(new MahjongTile("3m"));
+      deck.remove(new MahjongTile("1m"));
+      tmp.add(deck.removeFirst());
+      tmp.add(deck.removeFirst());
+      tmp.add(deck.removeFirst());
+      tmp.add(deck.removeFirst());
+      tmp.add(deck.removeFirst());
+      tmp.add(deck.removeFirst());
+      tmp.add(deck.removeFirst());
+      tmp.add(deck.removeFirst());
+      tmp.add(deck.removeFirst());
+      deck.addFirst(new MahjongTile("1m"));
+      deck.addFirst(tmp.remove(0));
+      deck.addFirst(tmp.remove(0));
+      deck.addFirst(tmp.remove(0));
+      deck.addFirst(tmp.remove(0));
+      deck.addFirst(tmp.remove(0));
+      deck.addFirst(tmp.remove(0));
+      deck.addFirst(tmp.remove(0));
+      deck.addFirst(tmp.remove(0));
+      deck.addFirst(tmp.remove(0));
+      deck.addFirst(new MahjongTile("1m"));
+      deck.addFirst(new MahjongTile("1m"));
+      deck.addFirst(new MahjongTile("2m"));
+      deck.addFirst(new MahjongTile("3m"));
+    }
     for (PlayerState player : players) {
       player.hand.clear();
       for (int j = 0; j < 13; j++) {
@@ -277,15 +309,16 @@ public class MahjongGame {
       for(int i = 0, pl = dealer; i < 4; i++, pl = (pl + 1) % 4) {
         PlayerState considerPlayer = players[pl];
         Packet p2 = considerPlayer.controller.receive(TIMEOUT);
-        logs.info("Player %d passes", pl);
         if(p2.getId() == NoActionPacket.ID) {
+          logs.info("Player %d passes", pl);
           continue;
         } else if(p2.getId() == PonPacket.ID) {
           if(!considerPlayer.hand.canPon(discardedTile)) {
             unalivePlayer(current);
           } else {
-            current.hand.doPon(discardedTile);
+            considerPlayer.hand.doPon(discardedTile);
             updatePlayerHand(pl);
+            broadcast(new UndiscardTilePacket(turn));
             dontDealMe = true;
             turn = pl;
             break;
@@ -297,6 +330,7 @@ public class MahjongGame {
           } else {
             current.hand.doChi(p2derived.getTiles());
             updatePlayerHand(pl);
+            broadcast(new UndiscardTilePacket(turn));
             dontDealMe = true;
             turn = pl;
             break;

@@ -64,7 +64,7 @@ public class DebugLayer implements UILayer {
    */
   @Override
   public void initialize(Window wnd) {
-    debugFont = NanoVG.nvgCreateFont(wnd.getNanoVG(), "Jetbrains Mono", Util.ASSET_ROOT + "/JetBrainsMono-Regular.ttf");
+    debugFont = NanoVG.nvgCreateFont(wnd.getNanoVG(), "JetBrainsMono", Util.ASSET_ROOT + "/JetBrainsMono-Regular.ttf");
     glVendorName = GL32.glGetString(GL32.GL_VENDOR);
     glRendererName = GL32.glGetString(GL32.GL_RENDERER);
     glVersion = GL32.glGetString(GL32.GL_VERSION);
@@ -126,6 +126,6 @@ public class DebugLayer implements UILayer {
 
     red.free();
 
-    NanoVG.nnvgEndFrame(nanovg);
+    NanoVG.nvgEndFrame(nanovg);
   }
 }

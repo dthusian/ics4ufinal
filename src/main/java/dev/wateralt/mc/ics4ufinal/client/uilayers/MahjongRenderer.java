@@ -15,7 +15,8 @@ import org.lwjgl.stb.STBImage;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
-import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * <h2>Mahjong Renderer</h2>
@@ -222,9 +223,27 @@ public class MahjongRenderer implements UILayer {
     return "MahjongRenderer";
   }
 
-  private void renderHand(int i, MahjongHand hand, boolean raycast, boolean highlightHand) {
+  private void renderTile(float[] transformMat, int texId, boolean highlight, int tileIdx, boolean raycast) {
+    GL32.glBindVertexArray(vaoModel);
+    if(!raycast) {
+      GL32.glUseProgram(program);
+      GL32.glUniformMatrix4fv(GL32.glGetUniformLocation(program, "uni_transform_mat"), false, transformMat);
+      GL32.glUniform1i(GL32.glGetUniformLocation(program, "uni_tex_id"), texId);
+      GL32.glUniform1i(GL32.glGetUniformLocation(program, "uni_highlight"), highlight ? 1 : 0);
+    } else {
+      GL32.glUseProgram(raycastShaders);
+      GL32.glUniformMatrix4fv(GL32.glGetUniformLocation(raycastShaders, "uni_transform_mat"), false, transformMat);
+      GL32.glUniform1i(GL32.glGetUniformLocation(raycastShaders, "uni_tile_idx"), tileIdx);
+    }
+    GL32.glBindBuffer(GL32.GL_ELEMENT_ARRAY_BUFFER, eboModel);
+    GL32.glBindTexture(GL32.GL_TEXTURE_2D, texMahjong);
+    GL32.glDrawElements(GL32.GL_TRIANGLES, 36, GL32.GL_UNSIGNED_INT, 0);
+  }
+
+  private void renderHand(int i, MahjongHand hand, boolean raycast, boolean[] highlightHand) {
     int tileIdx = 0;
     float[] buf = new float[16];
+
     for(MahjongTile tile : hand.getHidden()) {
       Matrix4f tmtModel = new Matrix4f()
           .mul(matProjection)
@@ -234,24 +253,33 @@ public class MahjongRenderer implements UILayer {
               .translate(new Vector3f(0.08f * tileIdx - hand.getLength() * 0.08f / 2, 0.3f, -0.8f))
           );
       tmtModel.get(buf);
-      GL32.glBindVertexArray(vaoModel);
-      if(!raycast) {
-        GL32.glUseProgram(program);
-        GL32.glUniformMatrix4fv(GL32.glGetUniformLocation(program, "uni_transform_mat"), false, buf);
-        GL32.glUniform1i(GL32.glGetUniformLocation(program, "uni_tex_id"), tile.getInternal());
-        if(tileIdx == hoveredTileIdx && highlightHand) {
-          GL32.glUniform1i(GL32.glGetUniformLocation(program, "uni_highlight"), 1);
-        } else {
-          GL32.glUniform1i(GL32.glGetUniformLocation(program, "uni_highlight"), 0);
-        }
-      } else {
-        GL32.glUseProgram(raycastShaders);
-        GL32.glUniformMatrix4fv(GL32.glGetUniformLocation(raycastShaders, "uni_transform_mat"), false, buf);
-        GL32.glUniform1i(GL32.glGetUniformLocation(raycastShaders, "uni_tile_idx"), tileIdx);
-      }
-      GL32.glBindBuffer(GL32.GL_ELEMENT_ARRAY_BUFFER, eboModel);
-      GL32.glBindTexture(GL32.GL_TEXTURE_2D, texMahjong);
-      GL32.glDrawElements(GL32.GL_TRIANGLES, 36, GL32.GL_UNSIGNED_INT, 0);
+      renderTile(buf, tile.getInternal(), tileIdx == hoveredTileIdx && highlightHand[tileIdx], tileIdx, raycast);
+      tileIdx++;
+    }
+    tileIdx = 0;
+    for(MahjongTile tile : hand.getHiddenKan()) {
+      Matrix4f tmtModel = new Matrix4f()
+          .mul(matProjection)
+          .mul(matView)
+          .mul(new Matrix4f()
+              .rotateY((float) Math.toRadians(i * 90.0f + 180.0f))
+              .translate(new Vector3f(- hand.getLength() * 0.08f / 2 - 0.2f - 0.08f * tileIdx, 0.3f, -0.8f))
+              .rotateX((tileIdx % 4 == 1 || tileIdx % 4 == 2) ? 180 : 0)
+          );
+      tmtModel.get(buf);
+      renderTile(buf, tile.getInternal(), false, tileIdx, false);
+      tileIdx++;
+    }
+    for(MahjongTile tile : hand.getShown()) {
+      Matrix4f tmtModel = new Matrix4f()
+          .mul(matProjection)
+          .mul(matView)
+          .mul(new Matrix4f()
+              .rotateY((float) Math.toRadians(i * 90.0f + 180.0f))
+              .translate(new Vector3f(- hand.getLength() * 0.08f / 2 - 0.2f - 0.08f * tileIdx, 0.3f, -0.8f))
+          );
+      tmtModel.get(buf);
+      renderTile(buf, tile.getInternal(), false, tileIdx, false);
       tileIdx++;
     }
   }
@@ -269,13 +297,7 @@ public class MahjongRenderer implements UILayer {
               .rotateX((float) Math.toRadians(-90.0f))
           );
       tmtModel.get(buf);
-      GL32.glUseProgram(program);
-      GL32.glUniformMatrix4fv(GL32.glGetUniformLocation(program, "uni_transform_mat"), false, buf);
-      GL32.glUniform1i(GL32.glGetUniformLocation(program, "uni_tex_id"), tile.getInternal());
-      GL32.glUniform1i(GL32.glGetUniformLocation(program, "uni_highlight"), 0);
-      GL32.glBindBuffer(GL32.GL_ELEMENT_ARRAY_BUFFER, eboModel);
-      GL32.glBindTexture(GL32.GL_TEXTURE_2D, texMahjong);
-      GL32.glDrawElements(GL32.GL_TRIANGLES, 36, GL32.GL_UNSIGNED_INT, 0);
+      renderTile(buf, tile.getInternal(), false, tileIdx, false);
       tileIdx++;
     }
   }
@@ -295,7 +317,16 @@ public class MahjongRenderer implements UILayer {
     GL32.glBindFramebuffer(GL32.GL_FRAMEBUFFER, 0);
     for(int i = 0; i < 4; i++) {
       synchronized (state) {
-        renderHand(i, state.getPlayerHands()[i], false, i == state.getMyPlayerId());
+        boolean[] highlight = new boolean[state.getMyHand().getLength()];
+        if(i == state.getMyPlayerId()) {
+          if(state.getPlayerAction() == MahjongClientState.PlayerAction.DISCARD_TILE) {
+            if(hoveredTileIdx != -1) highlight[hoveredTileIdx] = true;
+          } else if(state.getPlayerAction() == MahjongClientState.PlayerAction.SELECT_CHI) {
+            MahjongTile[] chi = state.getCallOptions().getChiList().get(state.getMyHand().getHidden().get(hoveredTileIdx));
+            for(int j = 0; j < 3; j++) highlight[state.getMyHand().getHidden().indexOf(chi[j])] = true;
+          }
+        }
+        renderHand(i, state.getPlayerHands()[i], false, highlight);
         renderDiscard(i, state.getPlayerDiscardPiles().get(i));
       }
     }
@@ -305,7 +336,7 @@ public class MahjongRenderer implements UILayer {
       GL32.glClearColor(0.0f, 1.0f, 0.0f, 0.0f);
       GL32.glClear(GL32.GL_COLOR_BUFFER_BIT | GL32.GL_DEPTH_BUFFER_BIT);
       synchronized (state) {
-        renderHand(state.getMyPlayerId(), state.getPlayerHands()[state.getMyPlayerId()], true, false);
+        renderHand(state.getMyPlayerId(), state.getPlayerHands()[state.getMyPlayerId()], true, new boolean[state.getMyHand().getLength()]);
       }
       GL32.glBindTexture(GL32.GL_TEXTURE_2D, framebufferColor);
       GL32.glGetTexImage(GL32.GL_TEXTURE_2D, 0, GL32.GL_RGB, GL32.GL_UNSIGNED_BYTE, imageBuffer);
@@ -316,9 +347,7 @@ public class MahjongRenderer implements UILayer {
         hoveredTileIdx = (int) (b / 4);
       }
     }
-
     frameCounter++;
-
     GL32.glBindFramebuffer(GL32.GL_FRAMEBUFFER, 0);
   }
 

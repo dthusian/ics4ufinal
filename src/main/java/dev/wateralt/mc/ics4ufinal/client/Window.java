@@ -87,6 +87,10 @@ public class Window {
     GLFW.glfwSetKeyCallback(window, (wnd, key, scancode, action, mods) -> {
       if(key == GLFW.GLFW_KEY_ESCAPE) {
         GLFW.glfwSetWindowShouldClose(wnd, true);
+      } else if(action == GLFW.GLFW_PRESS) {
+        for(int i = layers.size() - 1; i >= 0; i--) {
+          if(!layers.get(i).onKeyPress(this, key)) break;
+        }
       }
     });
     GLFW.glfwSetMouseButtonCallback(window, (wnd, button, action, mods) -> {
@@ -140,6 +144,15 @@ public class Window {
         layers.get(i).close();
         layers.set(i, layer);
         break;
+      }
+    }
+  }
+
+  public void removeLayer(String id) {
+    for(UILayer layer : layers) {
+      if(layer.getId().equals(id)) {
+        layer.close();
+        layers.remove(layer);
       }
     }
   }

@@ -17,12 +17,14 @@ public class MahjongClientState {
     public static int NOTHING = 0;
     public static int DISCARD_TILE = 1;
     public static int CALL_TILE = 2;
+    public static int SELECT_CHI = 3;
   }
 
   private final MahjongHand[] playerHands;
   private ArrayList<ArrayList<MahjongTile>> playerDiscardPiles;
   private int myPlayerId;
   private int playerAction;
+  private ClientCallOptions callOptions;
 
   /**
    * Constructs a Client State with empty hands and discard piles
@@ -40,6 +42,7 @@ public class MahjongClientState {
     playerDiscardPiles.add(new ArrayList<>());
     playerDiscardPiles.add(new ArrayList<>());
     playerAction = PlayerAction.NOTHING;
+    callOptions = null;
   }
 
   /**
@@ -83,6 +86,11 @@ public class MahjongClientState {
     return playerHands[myPlayerId];
   }
 
+  public ClientCallOptions getCallOptions() {
+    return callOptions;
+  }
 
-
+  public void setCallOptions(ClientCallOptions callOptions) {
+    this.callOptions = callOptions;
+  }
 }
