@@ -1,5 +1,6 @@
 package dev.wateralt.mc.ics4ufinal.client.uilayers;
 
+import dev.wateralt.mc.ics4ufinal.client.FontManager;
 import dev.wateralt.mc.ics4ufinal.client.Window;
 import dev.wateralt.mc.ics4ufinal.common.Logger;
 import dev.wateralt.mc.ics4ufinal.common.Util;
@@ -29,9 +30,6 @@ public class DebugLayer implements UILayer {
     }
   }
 
-  // NanoVG handle to Jetbrains Mono font for debugging
-  int debugFont;
-
   // Debug info
   long lastUpdated100ms;
   String osName;
@@ -50,7 +48,6 @@ public class DebugLayer implements UILayer {
    * Normal constructor.
    */
   public DebugLayer() {
-    debugFont = 0;
     lastUpdated100ms = -1;
     osName = System.getProperty("os.name");
     osArch = System.getProperty("os.arch");
@@ -64,7 +61,6 @@ public class DebugLayer implements UILayer {
    */
   @Override
   public void initialize(Window wnd) {
-    debugFont = NanoVG.nvgCreateFont(wnd.getNanoVG(), "JetBrainsMono", Util.ASSET_ROOT + "/JetBrainsMono-Regular.ttf");
     glVendorName = GL32.glGetString(GL32.GL_VENDOR);
     glRendererName = GL32.glGetString(GL32.GL_RENDERER);
     glVersion = GL32.glGetString(GL32.GL_VERSION);
@@ -111,7 +107,7 @@ public class DebugLayer implements UILayer {
     NVGColor red = NVGColor.malloc().r(1.0f).g(0.0f).b(0.0f).a(1.0f);
     NanoVG.nvgFillColor(nanovg, red);
     NanoVG.nvgStrokeColor(nanovg, red);
-    NanoVG.nvgFontFaceId(nanovg, debugFont);
+    NanoVG.nvgFontFaceId(nanovg, FontManager.fontJetBrainsMono);
     NanoVG.nvgFontSize(nanovg, 25);
 
     DebugPrinter pr = new DebugPrinter(nanovg);

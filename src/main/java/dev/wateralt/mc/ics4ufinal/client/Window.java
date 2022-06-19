@@ -67,7 +67,7 @@ public class Window {
     window = GLFW.glfwCreateWindow(videoMode.width(), videoMode.height(), title, GLFW.glfwGetPrimaryMonitor(), 0);
     if(window == 0) throw new NativeLibraryException("Failed to create window");
     GLFW.glfwMakeContextCurrent(window);
-    GLFW.glfwSwapInterval(0);
+    GLFW.glfwSwapInterval(1);
 
     // NanoVG
     GL.createCapabilities();
@@ -82,6 +82,7 @@ public class Window {
     height = fh[0];
     dpi = dpix[0];
     nanovg = NanoVGGL3.nvgCreate(NanoVGGL3.NVG_ANTIALIAS | NanoVGGL3.NVG_STENCIL_STROKES | (Util.DEBUG ? NanoVGGL3.NVG_DEBUG : 0));
+    FontManager.initialize(nanovg);
 
     // GLFW callbacks
     GLFW.glfwSetKeyCallback(window, (wnd, key, scancode, action, mods) -> {
@@ -89,7 +90,7 @@ public class Window {
         GLFW.glfwSetWindowShouldClose(wnd, true);
       } else if(action == GLFW.GLFW_PRESS) {
         for(int i = layers.size() - 1; i >= 0; i--) {
-          if(!layers.get(i).onKeyPress(this, key)) break;
+          if(!layers.get(i).onKeyPress(this, key, mods)) break;
         }
       }
     });

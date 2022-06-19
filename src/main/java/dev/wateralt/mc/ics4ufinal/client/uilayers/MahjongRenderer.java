@@ -142,9 +142,6 @@ public class MahjongRenderer implements UILayer {
     GL32.glTexImage2D(GL32.GL_TEXTURE_2D, 0, GL32.GL_RGB, width[0], height[0], 0, GL32.GL_RGB, GL32.GL_UNSIGNED_BYTE, buf);
     STBImage.stbi_image_free(buf);
 
-    //TODO make this not here
-    GLFW.glfwSetInputMode(wnd.getGlfw(), GLFW.GLFW_CURSOR, GLFW.GLFW_CURSOR_DISABLED);
-
     // Framebuffer creation
     GL32.glGenFramebuffers(cookie);
     framebuffer = cookie[0];
@@ -197,9 +194,7 @@ public class MahjongRenderer implements UILayer {
    */
   @Override
   public boolean onMouseMove(Window wnd, double newX, double newY) {
-    matView = new Matrix4f()
-        .rotateXYZ((float) Math.toRadians(newY), -(float) Math.toRadians(newX), 0.0f)
-        .translate(cameraPos);
+    moveCamera(newX, newY, 0.0f);
     mouseX = newX;
     mouseY = newY;
     return false;
@@ -221,6 +216,13 @@ public class MahjongRenderer implements UILayer {
   public String getId() {
     // Assume only 1 renderer can be active at once
     return "MahjongRenderer";
+  }
+
+  private void moveCamera(double xr, double yr, double trackTheta) {
+    matView = new Matrix4f()
+        .rotateXYZ((float) Math.toRadians(yr), -(float) Math.toRadians(xr), 0.0f)
+        .translate(cameraPos)
+        .rotateY((float) trackTheta);
   }
 
   private void renderTile(float[] transformMat, int texId, boolean highlight, int tileIdx, boolean raycast) {
@@ -250,7 +252,7 @@ public class MahjongRenderer implements UILayer {
           .mul(matView)
           .mul(new Matrix4f()
               .rotateY((float) Math.toRadians(i * 90.0f + 180.0f))
-              .translate(new Vector3f(0.08f * tileIdx - hand.getLength() * 0.08f / 2, 0.3f, -0.8f))
+              .translate(new Vector3f(0.08f * tileIdx - hand.getHidden().size() * 0.08f / 2, 0.3f, -0.8f))
           );
       tmtModel.get(buf);
       renderTile(buf, tile.getInternal(), tileIdx == hoveredTileIdx && highlightHand[tileIdx], tileIdx, raycast);
@@ -263,8 +265,8 @@ public class MahjongRenderer implements UILayer {
           .mul(matView)
           .mul(new Matrix4f()
               .rotateY((float) Math.toRadians(i * 90.0f + 180.0f))
-              .translate(new Vector3f(- hand.getLength() * 0.08f / 2 - 0.2f - 0.08f * tileIdx, 0.3f, -0.8f))
-              .rotateX((tileIdx % 4 == 1 || tileIdx % 4 == 2) ? 180 : 0)
+              .translate(new Vector3f(- hand.getHidden().size() * 0.08f / 2 - 0.2f - 0.08f * tileIdx, 0.3f, -0.8f))
+              .rotateX((float) Math.toRadians((tileIdx % 4 == 1 || tileIdx % 4 == 2) ? 270.0f : 90.0f))
           );
       tmtModel.get(buf);
       renderTile(buf, tile.getInternal(), false, tileIdx, false);
@@ -276,7 +278,8 @@ public class MahjongRenderer implements UILayer {
           .mul(matView)
           .mul(new Matrix4f()
               .rotateY((float) Math.toRadians(i * 90.0f + 180.0f))
-              .translate(new Vector3f(- hand.getLength() * 0.08f / 2 - 0.2f - 0.08f * tileIdx, 0.3f, -0.8f))
+              .translate(new Vector3f(- hand.getHidden().size() * 0.08f / 2 - 0.2f - 0.08f * tileIdx, 0.3f, -0.8f))
+              .rotateX((float) Math.toRadians(270.0f))
           );
       tmtModel.get(buf);
       renderTile(buf, tile.getInternal(), false, tileIdx, false);
@@ -313,42 +316,46 @@ public class MahjongRenderer implements UILayer {
     GL32.glViewport(0, 0, wnd.getWidth(), wnd.getHeight());
     GL32.glClearColor(0.0f, 0.8f, 0.2f, 0.0f);
     GL32.glClear(GL32.GL_COLOR_BUFFER_BIT | GL32.GL_DEPTH_BUFFER_BIT);
-
     GL32.glBindFramebuffer(GL32.GL_FRAMEBUFFER, 0);
-    for(int i = 0; i < 4; i++) {
-      synchronized (state) {
-        boolean[] highlight = new boolean[state.getMyHand().getLength()];
-        if(i == state.getMyPlayerId()) {
-          if(state.getPlayerAction() == MahjongClientState.PlayerAction.DISCARD_TILE) {
-            if(hoveredTileIdx != -1) highlight[hoveredTileIdx] = true;
-          } else if(state.getPlayerAction() == MahjongClientState.PlayerAction.SELECT_CHI) {
-            MahjongTile[] chi = state.getCallOptions().getChiList().get(state.getMyHand().getHidden().get(hoveredTileIdx));
-            for(int j = 0; j < 3; j++) highlight[state.getMyHand().getHidden().indexOf(chi[j])] = true;
+
+    if(state != null) {
+      for(int i = 0; i < 4; i++) {
+        synchronized (state) {
+          boolean[] highlight = new boolean[state.getMyHand().getLength()];
+          if(i == state.getMyPlayerId()) {
+            if(state.getPlayerAction() == MahjongClientState.PlayerAction.DISCARD_TILE) {
+              if(hoveredTileIdx != -1) highlight[hoveredTileIdx] = true;
+            } else if(state.getPlayerAction() == MahjongClientState.PlayerAction.SELECT_CHI) {
+              if(hoveredTileIdx != -1) {
+                MahjongTile[] chi = state.getCallOptions().getChiList().get(state.getMyHand().getHidden().get(hoveredTileIdx));
+                if(chi != null) for(int j = 0; j < 3; j++) highlight[state.getMyHand().getHidden().indexOf(chi[j])] = true;
+              }
+            }
           }
+          renderHand(i, state.getPlayerHands()[i], false, highlight);
+          renderDiscard(i, state.getPlayerDiscardPiles().get(i));
         }
-        renderHand(i, state.getPlayerHands()[i], false, highlight);
-        renderDiscard(i, state.getPlayerDiscardPiles().get(i));
       }
-    }
 
-    if(frameCounter % 10 == 0) {
-      GL32.glBindFramebuffer(GL32.GL_FRAMEBUFFER, framebuffer);
-      GL32.glClearColor(0.0f, 1.0f, 0.0f, 0.0f);
-      GL32.glClear(GL32.GL_COLOR_BUFFER_BIT | GL32.GL_DEPTH_BUFFER_BIT);
-      synchronized (state) {
-        renderHand(state.getMyPlayerId(), state.getPlayerHands()[state.getMyPlayerId()], true, new boolean[state.getMyHand().getLength()]);
+      if(frameCounter % 10 == 0) {
+        GL32.glBindFramebuffer(GL32.GL_FRAMEBUFFER, framebuffer);
+        GL32.glClearColor(0.0f, 1.0f, 0.0f, 0.0f);
+        GL32.glClear(GL32.GL_COLOR_BUFFER_BIT | GL32.GL_DEPTH_BUFFER_BIT);
+        synchronized (state) {
+          renderHand(state.getMyPlayerId(), state.getPlayerHands()[state.getMyPlayerId()], true, new boolean[state.getMyHand().getLength()]);
+        }
+        GL32.glBindTexture(GL32.GL_TEXTURE_2D, framebufferColor);
+        GL32.glGetTexImage(GL32.GL_TEXTURE_2D, 0, GL32.GL_RGB, GL32.GL_UNSIGNED_BYTE, imageBuffer);
+        long b = Byte.toUnsignedLong(imageBuffer.get((wnd.getWidth() / 2 + (wnd.getHeight() / 2) * wnd.getWidth()) * 3 + 1));
+        if(b >= 255) {
+          hoveredTileIdx = -1;
+        } else {
+          hoveredTileIdx = (int) (b / 4);
+        }
       }
-      GL32.glBindTexture(GL32.GL_TEXTURE_2D, framebufferColor);
-      GL32.glGetTexImage(GL32.GL_TEXTURE_2D, 0, GL32.GL_RGB, GL32.GL_UNSIGNED_BYTE, imageBuffer);
-      long b = Byte.toUnsignedLong(imageBuffer.get((wnd.getWidth() / 2 + (wnd.getHeight() / 2) * wnd.getWidth()) * 3 + 1));
-      if(b >= 255) {
-        hoveredTileIdx = -1;
-      } else {
-        hoveredTileIdx = (int) (b / 4);
-      }
+      frameCounter++;
+      GL32.glBindFramebuffer(GL32.GL_FRAMEBUFFER, 0);
     }
-    frameCounter++;
-    GL32.glBindFramebuffer(GL32.GL_FRAMEBUFFER, 0);
   }
 
   /**

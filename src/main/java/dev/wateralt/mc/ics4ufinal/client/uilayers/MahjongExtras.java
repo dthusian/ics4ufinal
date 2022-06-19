@@ -1,6 +1,7 @@
 package dev.wateralt.mc.ics4ufinal.client.uilayers;
 
 import dev.wateralt.mc.ics4ufinal.client.Client;
+import dev.wateralt.mc.ics4ufinal.client.FontManager;
 import dev.wateralt.mc.ics4ufinal.client.MahjongClientState;
 import dev.wateralt.mc.ics4ufinal.client.Window;
 import dev.wateralt.mc.ics4ufinal.common.MahjongTile;
@@ -22,7 +23,6 @@ public class MahjongExtras implements UILayer {
   MahjongClientState state;
   Client client;
   MahjongRenderer renderer;
-  int font;
 
   @Override
   public String getId() {
@@ -31,7 +31,6 @@ public class MahjongExtras implements UILayer {
 
   @Override
   public void initialize(Window wnd) {
-    font = NanoVG.nvgCreateFont(wnd.getNanoVG(), "SourceSansPro", Util.ASSET_ROOT + "/SourceSansPro-Regular.ttf");
   }
 
   public void setRenderer(MahjongRenderer renderer) {
@@ -48,12 +47,11 @@ public class MahjongExtras implements UILayer {
 
   @Override
   public void render(Window wnd) {
-
     NVGColor col = NVGColor.malloc().r(0.0f).g(0.0f).b(1.0f).a(1.0f);
     NanoVG.nvgBeginFrame(wnd.getNanoVG(), (float) wnd.getWidth(), (float) wnd.getHeight(), (float) wnd.getDpi());
     NanoVG.nvgFillColor(wnd.getNanoVG(), col);
     NanoVG.nvgStrokeColor(wnd.getNanoVG(), col);
-    NanoVG.nvgFontFaceId(wnd.getNanoVG(), font);
+    NanoVG.nvgFontFaceId(wnd.getNanoVG(), FontManager.fontSourceSansPro);
     NanoVG.nvgFontSize(wnd.getNanoVG(), 40);
     synchronized (state) {
       if (state.getPlayerAction() == MahjongClientState.PlayerAction.CALL_TILE) {
@@ -84,11 +82,13 @@ public class MahjongExtras implements UILayer {
         }
       } else if(state.getPlayerAction() == MahjongClientState.PlayerAction.SELECT_CHI) {
         int hoveredTile = renderer.getHoveredTileIndex();
-        MahjongTile[] wantChi = state.getCallOptions().getChiList().get(state.getMyHand().getHidden().get(hoveredTile));
-        if(wantChi != null) {
-          state.setCallOptions(null);
-          state.setPlayerAction(MahjongClientState.PlayerAction.NOTHING);
-          client.sendPacket(new ChiPacket(wantChi, state.getMyPlayerId()));
+        if(hoveredTile != -1) {
+          MahjongTile[] wantChi = state.getCallOptions().getChiList().get(state.getMyHand().getHidden().get(hoveredTile));
+          if(wantChi != null) {
+            state.setCallOptions(null);
+            state.setPlayerAction(MahjongClientState.PlayerAction.NOTHING);
+            client.sendPacket(new ChiPacket(wantChi, state.getMyPlayerId()));
+          }
         }
       }
     }
@@ -96,7 +96,7 @@ public class MahjongExtras implements UILayer {
   }
 
   @Override
-  public boolean onKeyPress(Window wnd, int key) {
+  public boolean onKeyPress(Window wnd, int key, int modifiers) {
     synchronized (state) {
       if(key == GLFW.GLFW_KEY_Q) {
         state.setPlayerAction(MahjongClientState.PlayerAction.NOTHING);

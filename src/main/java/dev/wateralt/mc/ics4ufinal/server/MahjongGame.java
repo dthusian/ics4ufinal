@@ -325,10 +325,11 @@ public class MahjongGame {
           }
         } else if(p2.getId() == ChiPacket.ID) {
           ChiPacket p2derived = (ChiPacket) p2;
+          //TODO possibly not secure
           if(!considerPlayer.hand.canChi(p2derived.getTiles())) {
             unalivePlayer(current);
           } else {
-            current.hand.doChi(p2derived.getTiles());
+            considerPlayer.hand.doChi(p2derived.getTiles(), discardedTile);
             updatePlayerHand(pl);
             broadcast(new UndiscardTilePacket(turn));
             dontDealMe = true;

@@ -65,7 +65,7 @@ public interface UILayer {
     return true;
   }
 
-  default boolean onKeyPress(Window wnd, int key) {
+  default boolean onKeyPress(Window wnd, int key, int modifiers) {
     return true;
   }
 

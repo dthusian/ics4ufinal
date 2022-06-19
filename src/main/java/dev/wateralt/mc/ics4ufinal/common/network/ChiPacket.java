@@ -21,7 +21,7 @@ public class ChiPacket extends Packet {
 
   @Override
   public int getId() {
-    return 0;
+    return ID;
   }
 
   @Override

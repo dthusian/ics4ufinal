@@ -184,9 +184,9 @@ public class MahjongHand {
     return Arrays.stream(t).filter(v -> hidden.contains(v)).count() >= 2;
   }
 
-  public void doChi(MahjongTile[] t) {
+  public void doChi(MahjongTile[] t, MahjongTile discarded) {
     Arrays.sort(t);
-    hidden.removeAll(List.of(t));
+    hidden.removeAll(Arrays.stream(t).filter(v -> !v.equals(discarded)).toList());
     shown.addAll(List.of(t));
   }
 
