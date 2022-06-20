@@ -1,6 +1,6 @@
 package dev.wateralt.mc.ics4ufinal.client.uilayers;
 
-import dev.wateralt.mc.ics4ufinal.client.FontManager;
+import dev.wateralt.mc.ics4ufinal.client.NanoVGResources;
 import dev.wateralt.mc.ics4ufinal.client.UIManager;
 import dev.wateralt.mc.ics4ufinal.client.Window;
 import org.lwjgl.glfw.GLFW;
@@ -20,6 +20,7 @@ public class MenuUI implements UILayer {
   String connectionError;
   int connectionErrorTimeout;
   int mx, my;
+  int nBots;
 
   public MenuUI(UIManager mgr) {
     contents = "";
@@ -27,6 +28,7 @@ public class MenuUI implements UILayer {
     connectionErrorTimeout = -1;
     mx = 0;
     my = 0;
+    nBots = 0;
   }
 
   @Override
@@ -36,48 +38,49 @@ public class MenuUI implements UILayer {
 
   @Override
   public void initialize(Window wnd) {
-
   }
 
   @Override
   public void render(Window wnd) {
-    NVGColor color = NVGColor.malloc().r(0.0f).g(0.0f).b(0.3f).a(1.0f);
-    NVGColor white = NVGColor.malloc().r(1.0f).g(1.0f).b(1.0f).a(1.0f);
-    NVGColor red = NVGColor.malloc().r(1.0f).g(0.0f).b(0.0f).a(1.0f);
 
     long nvg = wnd.getNanoVG();
     NanoVG.nvgBeginFrame(nvg, (float) wnd.getWidth(), (float) wnd.getHeight(), (float) wnd.getDpi());
-    NanoVG.nvgFontFaceId(nvg, FontManager.fontSourceSansPro);
+    NanoVG.nvgFontFaceId(nvg, NanoVGResources.fontSourceSansPro);
     NanoVG.nvgFontSize(nvg, 30);
 
-    NanoVG.nvgFillColor(nvg, color);
+    NanoVG.nvgFillColor(nvg, NanoVGResources.colorDarkBlue);
     NanoVG.nvgBeginPath(nvg);
-    NanoVG.nvgRoundedRect(nvg, 50, 500, BTN_WIDTH, BTN_HEIGHT, 15);
-    NanoVG.nvgRoundedRect(nvg, 50, 600, TEXT_WIDTH, TEXT_HEIGHT, 15);
-    NanoVG.nvgRoundedRect(nvg, 50, 675, BTN_WIDTH, BTN_HEIGHT, 15);
+    NanoVG.nvgRoundedRect(nvg, topLeft(wnd, 1), 400, BTN_WIDTH, BTN_HEIGHT, 15);
+    NanoVG.nvgRoundedRect(nvg, topLeft(wnd, 1),  500, BTN_WIDTH, BTN_HEIGHT, 15);
+    NanoVG.nvgRoundedRect(nvg, topLeft(wnd, 2), 500, TEXT_WIDTH, TEXT_HEIGHT, 15);
+    NanoVG.nvgRoundedRect(nvg, topLeft(wnd, 2), 400, BTN_WIDTH, BTN_HEIGHT, 15);
     NanoVG.nvgFill(nvg);
     NanoVG.nvgClosePath(nvg);
 
-    NanoVG.nvgFillColor(nvg, white);
+    NanoVG.nvgFillColor(nvg, NanoVGResources.colorWhite);
     NanoVG.nvgBeginPath(nvg);
-    NanoVG.nvgRect(nvg, 60, 610, TEXT_WIDTH - 20, TEXT_HEIGHT - 20);
+    NanoVG.nvgRect(nvg, topLeft(wnd, 2) + 10, 510, TEXT_WIDTH - 20, TEXT_HEIGHT - 20);
     NanoVG.nvgFill(nvg);
     NanoVG.nvgClosePath(nvg);
 
-    NanoVG.nvgFillColor(nvg, color);
-    NanoVG.nvgText(nvg, 60, 637, contents);
+    NanoVG.nvgFillColor(nvg, NanoVGResources.colorWhite);
+    NanoVG.nvgTextAlign(nvg, NanoVG.NVG_ALIGN_CENTER);
+    NanoVG.nvgText(nvg, topLeft(wnd, 1) + 125, 450, "Host Game");
+    NanoVG.nvgText(nvg, topLeft(wnd, 2) + 125, 450, "Connect to Game");
+    NanoVG.nvgText(nvg, topLeft(wnd, 1) + 125, 550, "Bots: " + nBots);
+
+    NanoVG.nvgFillColor(nvg, NanoVGResources.colorDarkBlue);
+    NanoVG.nvgTextAlign(nvg, NanoVG.NVG_ALIGN_LEFT);
+    NanoVG.nvgText(nvg, topLeft(wnd, 2) + 10, 535, contents);
 
     if(connectionErrorTimeout != -1) {
-      NanoVG.nvgFillColor(nvg, red);
-      NanoVG.nvgStrokeColor(nvg, red);
+      NanoVG.nvgFillColor(nvg, NanoVGResources.colorRed);
+      NanoVG.nvgStrokeColor(nvg, NanoVGResources.colorRed);
       NanoVG.nvgText(nvg, wnd.getWidth() / 2, wnd.getHeight() - 500, connectionError);
       connectionErrorTimeout--;
     }
 
     NanoVG.nvgEndFrame(wnd.getNanoVG());
-    color.free();
-    white.free();
-    red.free();
   }
 
   @Override
@@ -107,24 +110,33 @@ public class MenuUI implements UILayer {
     return true;
   }
 
+  private int topLeft(Window wnd, int i) {
+    return i * wnd.getWidth() / 3 - 125;
+  }
+
   @Override
   public boolean onMousePress(Window wnd, int button) {
-    if(mx > 50 && mx < 300 && my > 500 && my < 575) {
+    if(mx > topLeft(wnd, 1) && mx < topLeft(wnd, 1) + 250 && my > 400 && my < 475) {
       try {
-        mgr.hostGame();
+        mgr.hostGame(nBots);
       } catch(IOException err) {
         connectionError = err.getMessage();
         connectionErrorTimeout = 1200;
       }
       return false;
     }
-    if(mx > 50 && mx < 300 && my > 650 && my < 725) {
+    if(mx > topLeft(wnd, 2) && mx < topLeft(wnd, 2) + 250 && my > 400 && my < 475) {
       try {
         mgr.connectToGame(contents);
       } catch(Exception err) {
         connectionError = err.getMessage();
         connectionErrorTimeout = 1200;
       }
+      return false;
+    }
+    if(mx > topLeft(wnd, 1) && mx < topLeft(wnd, 1) + 250 && my > 500 && my < 575) {
+      nBots++;
+      nBots %= 4;
     }
     return true;
   }

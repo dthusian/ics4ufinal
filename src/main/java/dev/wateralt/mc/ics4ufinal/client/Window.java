@@ -13,7 +13,6 @@ import org.lwjgl.nanovg.NanoVGGL3;
 import org.lwjgl.opengl.GL;
 
 import java.util.ArrayList;
-import java.util.stream.Collectors;
 
 /**
  * <h2>Window</h2>
@@ -82,7 +81,7 @@ public class Window {
     height = fh[0];
     dpi = dpix[0];
     nanovg = NanoVGGL3.nvgCreate(NanoVGGL3.NVG_ANTIALIAS | NanoVGGL3.NVG_STENCIL_STROKES | (Util.DEBUG ? NanoVGGL3.NVG_DEBUG : 0));
-    FontManager.initialize(nanovg);
+    NanoVGResources.initialize(nanovg);
 
     // GLFW callbacks
     GLFW.glfwSetKeyCallback(window, (wnd, key, scancode, action, mods) -> {
@@ -150,10 +149,12 @@ public class Window {
   }
 
   public void removeLayer(String id) {
-    for(UILayer layer : layers) {
+    for(int i = 0; i < layers.size(); i++) {
+      UILayer layer = layers.get(i);
       if(layer.getId().equals(id)) {
         layer.close();
         layers.remove(layer);
+        i--;
       }
     }
   }

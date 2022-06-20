@@ -1,5 +1,6 @@
 package dev.wateralt.mc.ics4ufinal.client;
 
+import dev.wateralt.mc.ics4ufinal.client.uilayers.LobbyUI;
 import dev.wateralt.mc.ics4ufinal.client.uilayers.MahjongExtras;
 import dev.wateralt.mc.ics4ufinal.client.uilayers.MahjongRenderer;
 import dev.wateralt.mc.ics4ufinal.client.uilayers.MenuUI;
@@ -7,8 +8,6 @@ import dev.wateralt.mc.ics4ufinal.common.Logger;
 import dev.wateralt.mc.ics4ufinal.server.Server;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Basically manages the entire UI flow for game
@@ -31,6 +30,7 @@ public class UIManager {
     server = null;
     renderer = new MahjongRenderer();
     extras = new MahjongExtras();
+    logs = new Logger(this);
     wnd.addLayer(renderer);
     wnd.addLayer(new MenuUI(this));
   }
@@ -38,12 +38,16 @@ public class UIManager {
   public void connectToGame(String uri) throws IOException {
     client = new Client(uri);
     logs.info("Connecting to %s", uri);
+    wnd.removeLayer("MenuUI");
+    wnd.addLayer(new LobbyUI(this));
   }
 
-  public void hostGame() throws IOException {
-    server = new Server(34567);
+  public void hostGame(int nBots) throws IOException {
+    server = new Server(34567, nBots);
     client = new Client("127.0.0.1:34567");
     logs.info("Hosted game on port 34567");
+    wnd.removeLayer("MenuUI");
+    wnd.addLayer(new LobbyUI(this));
   }
 
   public void disconnect() throws IOException {

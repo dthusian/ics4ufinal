@@ -18,18 +18,22 @@ public class Server {
   MahjongGame state;
   AtomicInteger signal;
   Logger logs;
+  int needPlayers;
 
   /**
    * Constructs a server to listen on a specified port.
    * @param port The port to listen on.
    * @throws IOException
    */
-  public Server(int port) throws IOException {
+  public Server(int port, int nBots) throws IOException {
+    if(nBots > 4 || nBots < 0) throw new IllegalArgumentException();
     socket = new ServerSocket(port);
     state = new MahjongGame();
     logs = new Logger();
     signal = new AtomicInteger();
     signal.set(0);
+    needPlayers = 4 - nBots;
+    for(int i = 0; i < nBots; i++) state.addPlayer(new NullController());
     thread = new Thread(this::threadMain);
     thread.start();
   }
@@ -40,7 +44,7 @@ public class Server {
    * @throws IOException
    */
   public static Server startDebug() throws IOException {
-    return new Server(42727);
+    return new Server(42727, 3);
   }
 
   /**
@@ -55,12 +59,11 @@ public class Server {
   private void threadMain() {
     try {
       //TODO debug only
-      Socket client = socket.accept();
-      logs.info("Player connected: %s", client.getInetAddress().toString());
-      state.addPlayer(new NetworkPlayerController(client));
-      state.addPlayer(new NullController());
-      state.addPlayer(new NullController());
-      state.addPlayer(new NullController());
+      for(int i = 0; i < needPlayers; i++) {
+        Socket client = socket.accept();
+        logs.info("Player connected: %s", client.getInetAddress().toString());
+        state.addPlayer(new NetworkPlayerController(client));
+      }
       state.runGame();
     } catch(IOException ignored) {
     }

@@ -1,10 +1,8 @@
 package dev.wateralt.mc.ics4ufinal.client.uilayers;
 
-import dev.wateralt.mc.ics4ufinal.client.FontManager;
+import dev.wateralt.mc.ics4ufinal.client.NanoVGResources;
 import dev.wateralt.mc.ics4ufinal.client.Window;
 import dev.wateralt.mc.ics4ufinal.common.Logger;
-import dev.wateralt.mc.ics4ufinal.common.Util;
-import org.lwjgl.nanovg.NVGColor;
 import org.lwjgl.nanovg.NanoVG;
 import org.lwjgl.opengl.GL32;
 
@@ -104,10 +102,9 @@ public class DebugLayer implements UILayer {
     long nanovg = wnd.getNanoVG();
     NanoVG.nvgBeginFrame(nanovg, (float) wnd.getWidth(), (float) wnd.getHeight(), (float) wnd.getDpi());
 
-    NVGColor red = NVGColor.malloc().r(1.0f).g(0.0f).b(0.0f).a(1.0f);
-    NanoVG.nvgFillColor(nanovg, red);
-    NanoVG.nvgStrokeColor(nanovg, red);
-    NanoVG.nvgFontFaceId(nanovg, FontManager.fontJetBrainsMono);
+    NanoVG.nvgFillColor(nanovg, NanoVGResources.colorRed);
+    NanoVG.nvgStrokeColor(nanovg, NanoVGResources.colorRed);
+    NanoVG.nvgFontFaceId(nanovg, NanoVGResources.fontJetBrainsMono);
     NanoVG.nvgFontSize(nanovg, 25);
 
     DebugPrinter pr = new DebugPrinter(nanovg);
@@ -119,8 +116,6 @@ public class DebugLayer implements UILayer {
     pr.print("OpenGL Renderer: %s", glRendererName);
     pr.print("FPS: %.2f", fps);
     pr.print("Memory: %dM used / %dM alloc / %dM max", memUsed / 1000000, memAllocated / 1000000, memMax / 1000000);
-
-    red.free();
 
     NanoVG.nvgEndFrame(nanovg);
   }

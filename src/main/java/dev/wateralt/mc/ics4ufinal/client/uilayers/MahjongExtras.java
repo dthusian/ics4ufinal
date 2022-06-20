@@ -1,19 +1,16 @@
 package dev.wateralt.mc.ics4ufinal.client.uilayers;
 
 import dev.wateralt.mc.ics4ufinal.client.Client;
-import dev.wateralt.mc.ics4ufinal.client.FontManager;
+import dev.wateralt.mc.ics4ufinal.client.NanoVGResources;
 import dev.wateralt.mc.ics4ufinal.client.MahjongClientState;
 import dev.wateralt.mc.ics4ufinal.client.Window;
 import dev.wateralt.mc.ics4ufinal.common.MahjongTile;
-import dev.wateralt.mc.ics4ufinal.common.Util;
 import dev.wateralt.mc.ics4ufinal.common.network.ChiPacket;
 import dev.wateralt.mc.ics4ufinal.common.network.DiscardTilePacket;
 import dev.wateralt.mc.ics4ufinal.common.network.PonPacket;
 import org.lwjgl.glfw.GLFW;
 import org.lwjgl.nanovg.NVGColor;
 import org.lwjgl.nanovg.NanoVG;
-
-import java.io.IOException;
 
 /**
  * I wanted MahjongRenderer to be hyper-focused on OpenGL code, so this UI layer implements a lot
@@ -51,7 +48,7 @@ public class MahjongExtras implements UILayer {
     NanoVG.nvgBeginFrame(wnd.getNanoVG(), (float) wnd.getWidth(), (float) wnd.getHeight(), (float) wnd.getDpi());
     NanoVG.nvgFillColor(wnd.getNanoVG(), col);
     NanoVG.nvgStrokeColor(wnd.getNanoVG(), col);
-    NanoVG.nvgFontFaceId(wnd.getNanoVG(), FontManager.fontSourceSansPro);
+    NanoVG.nvgFontFaceId(wnd.getNanoVG(), NanoVGResources.fontSourceSansPro);
     NanoVG.nvgFontSize(wnd.getNanoVG(), 40);
     synchronized (state) {
       if (state.getPlayerAction() == MahjongClientState.PlayerAction.CALL_TILE) {
