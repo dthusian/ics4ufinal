@@ -11,8 +11,8 @@ public class Chantaiyao extends Yaku {
 
   @Override
   protected int match(ParsedHand hand) {
-    return (Arrays.stream(hand.objs()).map(Yaku::unwrapObj).allMatch(v -> Arrays.stream(v).anyMatch(v2 -> !Tanyao.isSimple(v2))) ?
+    return (Arrays.stream(hand.objs()).map(Yaku::unwrapObj).allMatch(v -> Arrays.stream(v).anyMatch(v2 -> !Tanyao.isSimple(v2))) && !Tanyao.isSimple(hand.pair())) ?
         (hand.isOpen() ? 1 : 2)
-        : 0);
+        : 0;
   }
 }

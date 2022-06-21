@@ -25,6 +25,7 @@ public class MahjongClientState {
   private int myPlayerId;
   private int playerAction;
   private ClientCallOptions callOptions;
+  private boolean canTsumo;
 
   /**
    * Constructs a Client State with empty hands and discard piles
@@ -43,6 +44,7 @@ public class MahjongClientState {
     playerDiscardPiles.add(new ArrayList<>());
     playerAction = PlayerAction.NOTHING;
     callOptions = null;
+    canTsumo = false;
   }
 
   /**
@@ -93,4 +95,6 @@ public class MahjongClientState {
   public void setCallOptions(ClientCallOptions callOptions) {
     this.callOptions = callOptions;
   }
+
+  public boolean getCanTsumo() { return canTsumo; }
 }

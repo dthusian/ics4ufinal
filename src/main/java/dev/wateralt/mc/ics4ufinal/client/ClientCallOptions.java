@@ -2,7 +2,9 @@ package dev.wateralt.mc.ics4ufinal.client;
 
 import dev.wateralt.mc.ics4ufinal.common.MahjongHand;
 import dev.wateralt.mc.ics4ufinal.common.MahjongTile;
+import dev.wateralt.mc.ics4ufinal.common.yaku.Yaku;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 
 /**
@@ -15,6 +17,7 @@ public class ClientCallOptions {
 
   boolean pon;
   boolean kan;
+  boolean ron;
   HashMap<MahjongTile, MahjongTile[]> chiList;
 
   public ClientCallOptions(MahjongHand hand, MahjongTile discarded) {
@@ -22,6 +25,8 @@ public class ClientCallOptions {
     this.discarded = discarded;
     pon = hand.canPon(discarded);
     chiList = hand.getChi(discarded);
+    ArrayList<Yaku.YakuEntry> possiblyWin = Yaku.matchHand(hand);
+    ron = possiblyWin != null && possiblyWin.size() > 0;
   }
 
   public MahjongHand getHand() {
@@ -39,6 +44,8 @@ public class ClientCallOptions {
   public boolean canKan() {
     return kan;
   }
+
+  public boolean canRon() { return ron; };
 
   public HashMap<MahjongTile, MahjongTile[]> getChiList() {
     return chiList;

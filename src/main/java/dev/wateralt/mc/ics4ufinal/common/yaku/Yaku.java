@@ -84,13 +84,22 @@ public abstract class Yaku {
       ArrayList<Integer> tmpTiles = new ArrayList<>(numbers);
 
       ArrayList<Integer[]> sets = new ArrayList<>();
+      boolean valid = true;
       for(int j = 0; j < possibleChis.size(); j++) {
         if((i & (1 << j)) != 0) {
           Integer[] chiTiles = new Integer[] { possibleChis.get(j), possibleChis.get(j) + 1, possibleChis.get(j) + 2 };
-          for(int k = 0; k < 3; k++) tmpTiles.remove(chiTiles[k]);
+          for(int k = 0; k < 3; k++) {
+            if(!tmpTiles.contains(chiTiles[k])) {
+              valid = false;
+              break;
+            }
+            tmpTiles.remove(chiTiles[k]);
+          }
+          if(!valid) break;
           sets.add(chiTiles);
         }
       }
+      if(!valid) continue;
 
       // Frequency List
       HashMap<Integer, Integer> freq = new HashMap<>();
@@ -103,7 +112,7 @@ public abstract class Yaku {
       }
       // Check triples for validity
       boolean pairUsed = false;
-      boolean valid = true;
+      valid = true;
       for(int key : freq.keySet()) {
         if(freq.get(key) % 3 == 0) {
           for(int k = 0; k < freq.get(key); k += 3) sets.add(new Integer[] { key, key, key });
@@ -162,7 +171,7 @@ public abstract class Yaku {
       }
     }
     for(int i = 0; i < hand.getShown().size(); i += 3) {
-      if(hand.getHidden().get(i).equals(hand.getShown().get(i + 1))) {
+      if(hand.getShown().get(i).equals(hand.getShown().get(i + 1))) {
         objects.add(new Triple(hand.getShown().get(i), true));
       } else {
         objects.add(new Run(hand.getShown().get(i), true));
@@ -193,9 +202,20 @@ public abstract class Yaku {
         new Pinfu(),
         new Tanyao(),
         new Iipeikou(),
-        new Yakuhai()
+        new Yakuhai(),
+        new Chantaiyao(),
+        new Honitsu(),
+        new Toitoi()
     };
-
-    throw new UnsupportedOperationException();
+    ParsedHand hand2 = handToObjects(hand);
+    if(hand2 == null) return null;
+    ArrayList<YakuEntry> entries = new ArrayList<>();
+    for(Yaku yaku : yakus) {
+      int matched = yaku.match(hand2);
+      if(matched > 0) {
+        entries.add(new YakuEntry(yaku, matched));
+      }
+    }
+    return entries;
   }
 }

@@ -5,13 +5,13 @@ import dev.wateralt.mc.ics4ufinal.client.NanoVGResources;
 import dev.wateralt.mc.ics4ufinal.client.MahjongClientState;
 import dev.wateralt.mc.ics4ufinal.client.Window;
 import dev.wateralt.mc.ics4ufinal.common.MahjongTile;
-import dev.wateralt.mc.ics4ufinal.common.network.ChiPacket;
-import dev.wateralt.mc.ics4ufinal.common.network.DiscardTilePacket;
-import dev.wateralt.mc.ics4ufinal.common.network.NoActionPacket;
-import dev.wateralt.mc.ics4ufinal.common.network.PonPacket;
+import dev.wateralt.mc.ics4ufinal.common.network.*;
+import dev.wateralt.mc.ics4ufinal.common.yaku.Yaku;
 import org.lwjgl.glfw.GLFW;
 import org.lwjgl.nanovg.NVGColor;
 import org.lwjgl.nanovg.NanoVG;
+
+import java.util.ArrayList;
 
 /**
  * I wanted MahjongRenderer to be hyper-focused on OpenGL code, so this UI layer implements a lot
@@ -55,11 +55,18 @@ public class MahjongExtras implements UILayer {
         if (state.getCallOptions().getChiList().size() > 0) {
           NanoVG.nvgText(wnd.getNanoVG(), 50, wnd.getHeight() - 150, "[W] Chi");
         }
+        if(state.getCallOptions().canRon()) {
+          NanoVG.nvgText(wnd.getNanoVG(), 50, wnd.getHeight() - 100, "[E] Ron");
+        }
         NanoVG.nvgText(wnd.getNanoVG(), 50, wnd.getHeight() - 250, "[Z] Skip");
       } else if(state.getPlayerAction() == MahjongClientState.PlayerAction.SELECT_CHI) {
         NanoVG.nvgTextAlign(wnd.getNanoVG(), NanoVG.NVG_ALIGN_CENTER);
         NanoVG.nvgText(wnd.getNanoVG(), wnd.getWidth() / 2, wnd.getHeight() - 500, "Select a tile to chi");
         NanoVG.nvgTextAlign(wnd.getNanoVG(), NanoVG.NVG_ALIGN_LEFT);
+      } else if(state.getPlayerAction() == MahjongClientState.PlayerAction.DISCARD_TILE) {
+        if(state.getCanTsumo()) {
+          NanoVG.nvgText(wnd.getNanoVG(), 50, wnd.getHeight() - 200, "[E] Tsumo");
+        }
       }
     }
     NanoVG.nvgEndFrame(wnd.getNanoVG());
@@ -94,15 +101,23 @@ public class MahjongExtras implements UILayer {
   public boolean onKeyPress(Window wnd, int key, int modifiers) {
     synchronized (state) {
       if(state.getPlayerAction() == MahjongClientState.PlayerAction.CALL_TILE) {
-        if(key == GLFW.GLFW_KEY_Q) {
+        if(key == GLFW.GLFW_KEY_Q && state.getCallOptions().canPon()) {
           state.setPlayerAction(MahjongClientState.PlayerAction.NOTHING);
           state.setCallOptions(null);
           client.sendPacket(new PonPacket());
-        } else if(key == GLFW.GLFW_KEY_W) {
+        } else if(key == GLFW.GLFW_KEY_W && state.getCallOptions().getChiList().size() > 0) {
           state.setPlayerAction(MahjongClientState.PlayerAction.SELECT_CHI);
+        } else if(key == GLFW.GLFW_KEY_E && state.getCallOptions().canRon()) {
+          state.setPlayerAction(MahjongClientState.PlayerAction.NOTHING);
+          client.sendPacket(new WinPacket());
         } else if(key == GLFW.GLFW_KEY_Z) {
           state.setPlayerAction(MahjongClientState.PlayerAction.NOTHING);
           client.sendPacket(new NoActionPacket());
+        }
+      } else if(state.getPlayerAction() == MahjongClientState.PlayerAction.DISCARD_TILE) {
+        if(key == GLFW.GLFW_KEY_E && state.getCanTsumo()) {
+          state.setPlayerAction(MahjongClientState.PlayerAction.NOTHING);
+          client.sendPacket(new WinPacket());
         }
       }
     }
