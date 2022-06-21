@@ -244,6 +244,7 @@ public class MahjongGame {
   private void unalivePlayer(PlayerState pl) {
     logs.warn("Player made an invalid move!");
     pl.controller = new NullController();
+    throw new RuntimeException();
   }
 
   private void updatePlayerHand(int j) {

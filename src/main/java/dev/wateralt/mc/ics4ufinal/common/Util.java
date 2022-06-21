@@ -31,6 +31,8 @@ public class Util {
   public static final int SIGNAL_STOP = 1;
   public static final int SIGNAL_SUSPEND = 2;
 
+  public record Tuple2<T1, T2>(T1 x, T2 y) { }
+
   /**
    * Reads all the contents of a file into a single string
    * @param path The path of the file to read

@@ -194,7 +194,7 @@ public class MahjongRenderer implements UILayer {
    */
   @Override
   public boolean onMouseMove(Window wnd, double newX, double newY) {
-    moveCamera(newX, newY, 0.0f);
+    moveCamera(newX - wnd.getWidth() / 2.0, newY - wnd.getHeight() / 2.0, 0.0f);
     mouseX = newX;
     mouseY = newY;
     return false;
@@ -222,7 +222,7 @@ public class MahjongRenderer implements UILayer {
     matView = new Matrix4f()
         .rotateXYZ((float) Math.toRadians(yr), -(float) Math.toRadians(xr), 0.0f)
         .translate(cameraPos)
-        .rotateY((float) trackTheta);
+        .rotateY((float) Math.toRadians(-90.0f * (state != null ? state.getMyPlayerId() : 0.0f)));
   }
 
   private void renderTile(float[] transformMat, int texId, boolean highlight, int tileIdx, boolean raycast) {
@@ -324,9 +324,9 @@ public class MahjongRenderer implements UILayer {
           boolean[] highlight = new boolean[state.getMyHand().getLength()];
           if(i == state.getMyPlayerId()) {
             if(state.getPlayerAction() == MahjongClientState.PlayerAction.DISCARD_TILE) {
-              if(hoveredTileIdx != -1) highlight[hoveredTileIdx] = true;
+              if(hoveredTileIdx > -1 && hoveredTileIdx < state.getMyHand().getLength()) highlight[hoveredTileIdx] = true;
             } else if(state.getPlayerAction() == MahjongClientState.PlayerAction.SELECT_CHI) {
-              if(hoveredTileIdx != -1) {
+              if(hoveredTileIdx != -1 && hoveredTileIdx < state.getMyHand().getLength()) {
                 MahjongTile[] chi = state.getCallOptions().getChiList().get(state.getMyHand().getHidden().get(hoveredTileIdx));
                 if(chi != null) for(int j = 0; j < 3; j++) highlight[state.getMyHand().getHidden().indexOf(chi[j])] = true;
               }
@@ -337,7 +337,7 @@ public class MahjongRenderer implements UILayer {
         }
       }
 
-      if(frameCounter % 10 == 0) {
+      if(frameCounter % 10 == 0 || true) {
         GL32.glBindFramebuffer(GL32.GL_FRAMEBUFFER, framebuffer);
         GL32.glClearColor(0.0f, 1.0f, 0.0f, 0.0f);
         GL32.glClear(GL32.GL_COLOR_BUFFER_BIT | GL32.GL_DEPTH_BUFFER_BIT);

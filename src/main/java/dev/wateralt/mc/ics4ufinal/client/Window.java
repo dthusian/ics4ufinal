@@ -194,4 +194,12 @@ public class Window {
   }
 
   public long getGlfw() { return window; }
+
+  public void setCursor(boolean shown) {
+    if(shown) {
+      GLFW.glfwSetInputMode(window, GLFW.GLFW_CURSOR, GLFW.GLFW_CURSOR_NORMAL);
+    } else {
+      GLFW.glfwSetInputMode(window, GLFW.GLFW_CURSOR, GLFW.GLFW_CURSOR_HIDDEN);
+    }
+  }
 }

@@ -6,6 +6,7 @@ import dev.wateralt.mc.ics4ufinal.client.uilayers.MahjongRenderer;
 import dev.wateralt.mc.ics4ufinal.client.uilayers.MenuUI;
 import dev.wateralt.mc.ics4ufinal.common.Logger;
 import dev.wateralt.mc.ics4ufinal.server.Server;
+import org.lwjgl.glfw.GLFW;
 
 import java.io.IOException;
 
@@ -35,19 +36,28 @@ public class UIManager {
     wnd.addLayer(new MenuUI(this));
   }
 
+  private void toMahjongUI() {
+    renderer.setClientState(client.getClientState());
+    wnd.removeLayer("MenuUI");
+    MahjongExtras extras = new MahjongExtras();
+    extras.setClient(client);
+    extras.setRenderer(renderer);
+    wnd.addLayer(extras);
+    wnd.addLayer(new LobbyUI(this));
+    wnd.setCursor(false);
+  }
+
   public void connectToGame(String uri) throws IOException {
     client = new Client(uri);
     logs.info("Connecting to %s", uri);
-    wnd.removeLayer("MenuUI");
-    wnd.addLayer(new LobbyUI(this));
+    toMahjongUI();
   }
 
   public void hostGame(int nBots) throws IOException {
     server = new Server(34567, nBots);
     client = new Client("127.0.0.1:34567");
     logs.info("Hosted game on port 34567");
-    wnd.removeLayer("MenuUI");
-    wnd.addLayer(new LobbyUI(this));
+    toMahjongUI();
   }
 
   public void disconnect() throws IOException {
