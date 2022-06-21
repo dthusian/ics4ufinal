@@ -186,7 +186,7 @@ public class MahjongHand {
 
   public void doChi(MahjongTile[] t, MahjongTile discarded) {
     Arrays.sort(t);
-    hidden.removeAll(Arrays.stream(t).filter(v -> !v.equals(discarded)).toList());
+    Arrays.stream(t).filter(v -> !v.equals(discarded)).forEach(hidden::remove);
     shown.addAll(List.of(t));
   }
 

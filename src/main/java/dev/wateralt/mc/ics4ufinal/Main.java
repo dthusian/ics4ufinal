@@ -1,27 +1,20 @@
 package dev.wateralt.mc.ics4ufinal;
 
-import dev.wateralt.mc.ics4ufinal.client.Client;
 import dev.wateralt.mc.ics4ufinal.client.UIManager;
-import dev.wateralt.mc.ics4ufinal.client.uilayers.DebugLayer;
-import dev.wateralt.mc.ics4ufinal.client.uilayers.MahjongExtras;
-import dev.wateralt.mc.ics4ufinal.client.uilayers.MahjongRenderer;
 import dev.wateralt.mc.ics4ufinal.client.Window;
-import dev.wateralt.mc.ics4ufinal.common.MahjongHand;
-import dev.wateralt.mc.ics4ufinal.common.MahjongTile;
 import dev.wateralt.mc.ics4ufinal.common.yaku.Yaku;
-import dev.wateralt.mc.ics4ufinal.server.Server;
 
-import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * Temporary main class. Only used for testing for now.
  */
 public class Main {
 
-  public static void main(String[] args) throws IOException {
+  public static void main(String[] args) {
     Window wnd = new Window("CS Mahjong");
     UIManager mgr = new UIManager(wnd);
     wnd.run();

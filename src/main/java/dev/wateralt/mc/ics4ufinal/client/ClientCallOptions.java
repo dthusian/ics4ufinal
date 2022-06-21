@@ -25,7 +25,9 @@ public class ClientCallOptions {
     this.discarded = discarded;
     pon = hand.canPon(discarded);
     chiList = hand.getChi(discarded);
+    hand.getHidden().add(discarded);
     ArrayList<Yaku.YakuEntry> possiblyWin = Yaku.matchHand(hand);
+    hand.getHidden().remove(discarded);
     ron = possiblyWin != null && possiblyWin.size() > 0;
   }
 

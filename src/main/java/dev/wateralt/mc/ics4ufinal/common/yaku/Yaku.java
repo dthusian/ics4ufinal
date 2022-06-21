@@ -69,13 +69,17 @@ public abstract class Yaku {
     throw new IllegalArgumentException();
   }
 
-  // TODO private
-  private static ArrayList<Integer[]> findObjects(List<Integer> numbers) {
-    Set<Integer> tileSet = new HashSet<>(numbers);
+  public static ArrayList<Integer[]> findObjects(List<Integer> numbers) {
+    ArrayList<Integer> tileSet = new ArrayList<>(numbers);
 
     ArrayList<Integer> possibleChis = new ArrayList<>();
     for(int i = 1; i <= 7; i++) {
-      if(tileSet.contains(i) && tileSet.contains(i + 1) && tileSet.contains(i + 2)) possibleChis.add(i);
+      while(tileSet.contains(i) && tileSet.contains(i + 1) && tileSet.contains(i + 2)) {
+        possibleChis.add(i);
+        tileSet.remove(tileSet.indexOf(i));
+        tileSet.remove(tileSet.indexOf(i + 1));
+        tileSet.remove(tileSet.indexOf(i + 2));
+      }
     }
 
     // For each possible combination of chis, create a new array and check its validity
@@ -191,8 +195,8 @@ public abstract class Yaku {
         objects.add(new Triple(new MahjongTile(i, 'z'), false));
       }
     }
-    if(objects.size() != 4) throw new RuntimeException(); // How did this happen
     if(nPairs != 1) return null;
+    if(objects.size() != 4) return null;
     return new ParsedHand(objects.toArray(), pair);
   }
 

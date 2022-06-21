@@ -194,7 +194,7 @@ public class MahjongRenderer implements UILayer {
    */
   @Override
   public boolean onMouseMove(Window wnd, double newX, double newY) {
-    moveCamera(newX - wnd.getWidth() / 2.0, newY - wnd.getHeight() / 2.0, 0.0f);
+    moveCamera(newX - wnd.getWidth() / 2.0, newY - wnd.getHeight() / 2.0, -1);
     mouseX = newX;
     mouseY = newY;
     return false;
@@ -218,11 +218,11 @@ public class MahjongRenderer implements UILayer {
     return "MahjongRenderer";
   }
 
-  private void moveCamera(double xr, double yr, double trackTheta) {
+  private void moveCamera(double xr, double yr, int playerIdOverride) {
     matView = new Matrix4f()
         .rotateXYZ((float) Math.toRadians(yr), -(float) Math.toRadians(xr), 0.0f)
         .translate(cameraPos)
-        .rotateY((float) Math.toRadians(-90.0f * (state != null ? state.getMyPlayerId() : 0.0f)));
+        .rotateY((float) Math.toRadians(-90.0f * (playerIdOverride != -1 ? playerIdOverride : (state != null ? state.getMyPlayerId() : 0.0f))));
   }
 
   private void renderTile(float[] transformMat, int texId, boolean highlight, int tileIdx, boolean raycast) {
@@ -318,7 +318,11 @@ public class MahjongRenderer implements UILayer {
     GL32.glClear(GL32.GL_COLOR_BUFFER_BIT | GL32.GL_DEPTH_BUFFER_BIT);
     GL32.glBindFramebuffer(GL32.GL_FRAMEBUFFER, 0);
 
-    if(state != null) {
+    if(state == null) {
+    } else if(state.getWinningHand() != null) {
+      moveCamera(0.0, 0.0, 0);
+      renderHand(0, state.getWinningHand(), false, new boolean[state.getWinningHand().getLength()]);
+    } else {
       for(int i = 0; i < 4; i++) {
         synchronized (state) {
           boolean[] highlight = new boolean[state.getMyHand().getLength()];
@@ -337,7 +341,7 @@ public class MahjongRenderer implements UILayer {
         }
       }
 
-      if(frameCounter % 10 == 0 || true) {
+      if(frameCounter % 10 == 0) {
         GL32.glBindFramebuffer(GL32.GL_FRAMEBUFFER, framebuffer);
         GL32.glClearColor(0.0f, 1.0f, 0.0f, 0.0f);
         GL32.glClear(GL32.GL_COLOR_BUFFER_BIT | GL32.GL_DEPTH_BUFFER_BIT);
@@ -376,4 +380,5 @@ public class MahjongRenderer implements UILayer {
   public int getHoveredTileIndex() {
     return hoveredTileIdx;
   }
+
 }

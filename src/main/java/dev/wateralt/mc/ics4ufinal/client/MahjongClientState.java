@@ -2,6 +2,7 @@ package dev.wateralt.mc.ics4ufinal.client;
 
 import dev.wateralt.mc.ics4ufinal.common.MahjongHand;
 import dev.wateralt.mc.ics4ufinal.common.MahjongTile;
+import dev.wateralt.mc.ics4ufinal.common.yaku.Yaku;
 
 import java.util.ArrayList;
 
@@ -18,6 +19,7 @@ public class MahjongClientState {
     public static int DISCARD_TILE = 1;
     public static int CALL_TILE = 2;
     public static int SELECT_CHI = 3;
+    public static int ENDED_GAME = 4;
   }
 
   private final MahjongHand[] playerHands;
@@ -26,6 +28,9 @@ public class MahjongClientState {
   private int playerAction;
   private ClientCallOptions callOptions;
   private boolean canTsumo;
+
+  public MahjongHand winningHand;
+  public ArrayList<Yaku.YakuEntry> winningYakus;
 
   /**
    * Constructs a Client State with empty hands and discard piles
@@ -97,4 +102,21 @@ public class MahjongClientState {
   }
 
   public boolean getCanTsumo() { return canTsumo; }
+
+  public void setCanTsumo(boolean canTsumo) {
+    this.canTsumo = canTsumo;
+  }
+
+  public void reportWin(MahjongHand winningHand) {
+    this.winningHand = winningHand;
+    this.winningYakus = Yaku.matchHand(winningHand);
+  }
+
+  public ArrayList<Yaku.YakuEntry> getWinningYakus() {
+    return winningYakus;
+  }
+
+  public MahjongHand getWinningHand() {
+    return winningHand;
+  }
 }

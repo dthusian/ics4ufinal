@@ -209,8 +209,8 @@ public class MahjongGame {
       h.add(new MahjongTile("2z"));
       h.add(new MahjongTile("2z"));
       h = players[1].hand.getHidden();
-      h.add(new MahjongTile("4s"));
       h.add(new MahjongTile("2z"));
+      h.add(new MahjongTile("4s"));
       h.add(new MahjongTile("2z"));
       h.add(new MahjongTile("2z"));
       h.add(new MahjongTile("2z"));
@@ -273,6 +273,22 @@ public class MahjongGame {
         int idx = rand.nextInt(genTiles.size());
         deck.add(genTiles.remove(idx));
       }
+      deck.addFirst(new MahjongTile("9p"));
+      deck.addFirst(new MahjongTile("9p"));
+      deck.addFirst(new MahjongTile("9p"));
+      deck.addFirst(new MahjongTile("9p"));
+      deck.addFirst(new MahjongTile("9p"));
+      deck.addFirst(new MahjongTile("9p"));
+      deck.addFirst(new MahjongTile("9p"));
+      deck.addFirst(new MahjongTile("9p"));
+      deck.addFirst(new MahjongTile("9p"));
+      deck.addFirst(new MahjongTile("9p"));
+      deck.addFirst(new MahjongTile("9p"));
+      deck.addFirst(new MahjongTile("9p"));
+      deck.addFirst(new MahjongTile("9p"));
+      deck.addFirst(new MahjongTile("9p"));
+      deck.addFirst(new MahjongTile("9p"));
+      deck.addFirst(new MahjongTile("9p"));
     }
 
   }
@@ -354,6 +370,9 @@ public class MahjongGame {
           broadcast(p);
           updatePlayerHand(turn);
           logs.info("Player %d discards %s", turn, discardedTile.toString());
+        } else if(p.getId() == WinPacketC2S.ID) {
+          broadcast(new WinPacketS2C(current.hand, turn));
+          return;
         } else {
           unalivePlayer(current);
           turn++;
@@ -372,7 +391,7 @@ public class MahjongGame {
           continue;
         } else if(p2.getId() == PonPacket.ID) {
           if(!considerPlayer.hand.canPon(discardedTile)) {
-            unalivePlayer(current);
+            unalivePlayer(considerPlayer);
           } else {
             considerPlayer.hand.doPon(discardedTile);
             updatePlayerHand(pl);
@@ -385,7 +404,7 @@ public class MahjongGame {
           ChiPacket p2derived = (ChiPacket) p2;
           //TODO possibly not secure
           if(!considerPlayer.hand.canChi(p2derived.getTiles())) {
-            unalivePlayer(current);
+            unalivePlayer(considerPlayer);
           } else {
             considerPlayer.hand.doChi(p2derived.getTiles(), discardedTile);
             updatePlayerHand(pl);
@@ -394,6 +413,13 @@ public class MahjongGame {
             turn = pl;
             break;
           }
+        } else if(p2.getId() == WinPacketC2S.ID) {
+          considerPlayer.hand.getHidden().add(discardedTile);
+          broadcast(new WinPacketS2C(considerPlayer.hand, pl));
+          return;
+        } else {
+          unalivePlayer(considerPlayer);
+          continue;
         }
       }
       // Means the player has called a tile from another source, don't increment counter

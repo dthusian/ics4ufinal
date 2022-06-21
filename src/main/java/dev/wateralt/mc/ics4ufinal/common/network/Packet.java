@@ -93,6 +93,12 @@ public abstract class Packet {
     } else if(type == ChiPacket.ID) {
       p = new ChiPacket();
       p.deserializeInternal(bytes.slice(8, length));
+    } else if(type == WinPacketC2S.ID) {
+      p = new WinPacketC2S();
+      p.deserializeInternal(bytes.slice(8, length));
+    } else if(type == WinPacketS2C.ID) {
+      p = new WinPacketS2C();
+      p.deserializeInternal(bytes.slice(8, length));
     } else {
       return null;
     }
@@ -107,4 +113,6 @@ public abstract class Packet {
 203 -> NoActionPacket
 204 -> PonPacket
 205 -> ChiPacket
+206 -> WinPacketC2S
+207 -> WinPacketS2C
 */

@@ -6,12 +6,9 @@ import dev.wateralt.mc.ics4ufinal.client.MahjongClientState;
 import dev.wateralt.mc.ics4ufinal.client.Window;
 import dev.wateralt.mc.ics4ufinal.common.MahjongTile;
 import dev.wateralt.mc.ics4ufinal.common.network.*;
-import dev.wateralt.mc.ics4ufinal.common.yaku.Yaku;
 import org.lwjgl.glfw.GLFW;
 import org.lwjgl.nanovg.NVGColor;
 import org.lwjgl.nanovg.NanoVG;
-
-import java.util.ArrayList;
 
 /**
  * I wanted MahjongRenderer to be hyper-focused on OpenGL code, so this UI layer implements a lot
@@ -64,6 +61,9 @@ public class MahjongExtras implements UILayer {
         NanoVG.nvgText(wnd.getNanoVG(), wnd.getWidth() / 2, wnd.getHeight() - 500, "Select a tile to chi");
         NanoVG.nvgTextAlign(wnd.getNanoVG(), NanoVG.NVG_ALIGN_LEFT);
       } else if(state.getPlayerAction() == MahjongClientState.PlayerAction.DISCARD_TILE) {
+        NanoVG.nvgTextAlign(wnd.getNanoVG(), NanoVG.NVG_ALIGN_CENTER);
+        NanoVG.nvgText(wnd.getNanoVG(), wnd.getWidth() / 2, wnd.getHeight() - 500, "Discard a tile");
+        NanoVG.nvgTextAlign(wnd.getNanoVG(), NanoVG.NVG_ALIGN_LEFT);
         if(state.getCanTsumo()) {
           NanoVG.nvgText(wnd.getNanoVG(), 50, wnd.getHeight() - 200, "[E] Tsumo");
         }
@@ -109,7 +109,7 @@ public class MahjongExtras implements UILayer {
           state.setPlayerAction(MahjongClientState.PlayerAction.SELECT_CHI);
         } else if(key == GLFW.GLFW_KEY_E && state.getCallOptions().canRon()) {
           state.setPlayerAction(MahjongClientState.PlayerAction.NOTHING);
-          client.sendPacket(new WinPacket());
+          client.sendPacket(new WinPacketC2S());
         } else if(key == GLFW.GLFW_KEY_Z) {
           state.setPlayerAction(MahjongClientState.PlayerAction.NOTHING);
           client.sendPacket(new NoActionPacket());
@@ -117,7 +117,7 @@ public class MahjongExtras implements UILayer {
       } else if(state.getPlayerAction() == MahjongClientState.PlayerAction.DISCARD_TILE) {
         if(key == GLFW.GLFW_KEY_E && state.getCanTsumo()) {
           state.setPlayerAction(MahjongClientState.PlayerAction.NOTHING);
-          client.sendPacket(new WinPacket());
+          client.sendPacket(new WinPacketC2S());
         }
       }
     }
