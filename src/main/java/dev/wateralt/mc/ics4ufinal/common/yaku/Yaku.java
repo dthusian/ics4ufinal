@@ -8,16 +8,69 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public abstract class Yaku {
-  public record Run(MahjongTile[] tiles, boolean shown) {}
-  public record Triple(MahjongTile tile, boolean shown) {}
-  public record YakuEntry(Yaku yaku, int han) {}
+  public record Run(MahjongTile firstTile, boolean shown) { }
+  public record Triple(MahjongTile tile, boolean shown) { }
+  public record ParsedHand(Object[] objs, MahjongTile pair) {
+    @Override
+    public String toString() {
+      StringBuilder sb = new StringBuilder();
+      for(Object o : objs) {
+        if(o instanceof Run) {
+          Run oDerived = (Run)o;
+          sb.append("[ %s %s %s ] ".formatted(
+              oDerived.firstTile(),
+              oDerived.firstTile().add(1),
+              oDerived.firstTile().add(2)
+          ));
+        } else if(o instanceof Triple) {
+          Triple oDerived = (Triple) o;
+          sb.append("[ %s %s %s ] ".formatted(
+              oDerived.tile(),
+              oDerived.tile(),
+              oDerived.tile()
+          ));
+        }
+      }
+      sb.append("[ %s %s ]".formatted(pair, pair));
+      return sb.toString();
+    }
+
+    public boolean isOpen() {
+      return Arrays.stream(objs).allMatch(v -> {
+        if(v instanceof Run) {
+          return ((Run)v).shown();
+        }
+        if(v instanceof Triple) {
+          return ((Triple)v).shown();
+        }
+        throw new RuntimeException();
+      });
+    }
+  }
+  public record YakuEntry(Yaku yaku, int han) {
+    @Override
+    public String toString() {
+      return "%s (%d han)".formatted(yaku.name(), han);
+    }
+  }
 
   public abstract String name();
-  protected abstract int match(Object[] entries, MahjongTile pair);
+  protected abstract int match(ParsedHand hand);
+
+  public static MahjongTile[] unwrapObj(Object o) {
+    if(o instanceof Run) {
+      Run oDerived = (Run) o;
+      return new MahjongTile[] { oDerived.firstTile(), oDerived.firstTile().add(1), oDerived.firstTile().add(2) };
+    }
+    if(o instanceof Triple) {
+      Triple oDerived = (Triple) o;
+      return new MahjongTile[] { oDerived.tile(), oDerived.tile(),oDerived.tile() };
+    }
+    throw new IllegalArgumentException();
+  }
 
   // TODO private
-  public static ArrayList<Integer[]> findObjects(List<Integer> numbers) {
-    ArrayList<Integer> tiles = new ArrayList<>(numbers);
+  private static ArrayList<Integer[]> findObjects(List<Integer> numbers) {
     Set<Integer> tileSet = new HashSet<>(numbers);
 
     ArrayList<Integer> possibleChis = new ArrayList<>();
@@ -69,52 +122,80 @@ public abstract class Yaku {
     return null;
   }
 
-  // Least efficient Yaku checker ever
-  public static ArrayList<YakuEntry> matchHand(MahjongHand hand) {
+  private static ParsedHand handToObjects(MahjongHand hand) {
     // Convert matched objects of each suit to a harmonized list of matched objects
     ArrayList<Object> objects = new ArrayList<>();
     ArrayList<Integer[]> matchM = findObjects(hand.getHidden().stream().filter(v -> v.getSuit() == 'm').map(v -> v.getNumber()).collect(Collectors.toList()));
     ArrayList<Integer[]> matchP = findObjects(hand.getHidden().stream().filter(v -> v.getSuit() == 'p').map(v -> v.getNumber()).collect(Collectors.toList()));
-    ArrayList<Integer[]> matchS = findObjects(hand.getHidden().stream().filter(v -> v.getSuit() == 'p').map(v -> v.getNumber()).collect(Collectors.toList()));
+    ArrayList<Integer[]> matchS = findObjects(hand.getHidden().stream().filter(v -> v.getSuit() == 's').map(v -> v.getNumber()).collect(Collectors.toList()));
     if(matchM == null || matchP == null || matchS == null) return null;
     int nPairs = 0;
+    MahjongTile pair = MahjongTile.NULL;
     for(Integer[] t : matchM) {
       if(!Objects.equals(t[0], t[1])) {
-        List<MahjongTile> a0 = Arrays.stream(t).map(v -> new MahjongTile(v, 'm')).toList();
-        MahjongTile[] a1 = new MahjongTile[a0.size()];
-        a0.toArray(a1);
-        objects.add(new Run(a1, false));
+        objects.add(new Run(new MahjongTile(t[0], 'm'), false));
       } else if(t.length == 2) {
         nPairs++;
+        pair = new MahjongTile(t[0], 'm');
       } else {
         objects.add(new Triple(new MahjongTile(t[0], 'm'), false));
       }
     }
     for(Integer[] t : matchP) {
       if(!Objects.equals(t[0], t[1])) {
-        List<MahjongTile> a0 = Arrays.stream(t).map(v -> new MahjongTile(v, 'p')).toList();
-        MahjongTile[] a1 = new MahjongTile[a0.size()];
-        a0.toArray(a1);
-        objects.add(new Run(a1, false));
+        objects.add(new Run(new MahjongTile(t[0], 'p'), false));
       } else if(t.length == 2) {
         nPairs++;
+        pair = new MahjongTile(t[0], 'p');
       } else {
         objects.add(new Triple(new MahjongTile(t[0], 'p'), false));
       }
     }
     for(Integer[] t : matchS) {
       if(!Objects.equals(t[0], t[1])) {
-        List<MahjongTile> a0 = Arrays.stream(t).map(v -> new MahjongTile(v, 's')).toList();
-        MahjongTile[] a1 = new MahjongTile[a0.size()];
-        a0.toArray(a1);
-        objects.add(new Run(a1, false));
+        objects.add(new Run(new MahjongTile(t[0], 's'), false));
       } else if(t.length == 2) {
         nPairs++;
+        pair = new MahjongTile(t[0], 's');
       } else {
         objects.add(new Triple(new MahjongTile(t[0], 's'), false));
       }
     }
-    if(nPairs > 1) return null;
+    for(int i = 0; i < hand.getShown().size(); i += 3) {
+      if(hand.getHidden().get(i).equals(hand.getShown().get(i + 1))) {
+        objects.add(new Triple(hand.getShown().get(i), true));
+      } else {
+        objects.add(new Run(hand.getShown().get(i), true));
+      }
+    }
+    int[] honorsFreq = new int[8];
+    for(MahjongTile tile : hand.getHidden().stream().filter(v -> v.getSuit() == 'z').toList()) {
+      honorsFreq[tile.getNumber()]++;
+    }
+    for(int i = 1; i <= 7; i++) {
+      if(honorsFreq[i] == 0) {
+        continue;
+      } else if(honorsFreq[i] == 2) {
+        nPairs++;
+        pair = new MahjongTile(i, 'z');
+      } else if(honorsFreq[i] == 3) {
+        objects.add(new Triple(new MahjongTile(i, 'z'), false));
+      }
+    }
+    if(objects.size() != 4) throw new RuntimeException(); // How did this happen
+    if(nPairs != 1) return null;
+    return new ParsedHand(objects.toArray(), pair);
+  }
+
+  // Least efficient Yaku checker ever
+  public static ArrayList<YakuEntry> matchHand(MahjongHand hand) {
+    Yaku[] yakus = new Yaku[] {
+        new Pinfu(),
+        new Tanyao(),
+        new Iipeikou(),
+        new Yakuhai()
+    };
+
     throw new UnsupportedOperationException();
   }
 }

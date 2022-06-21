@@ -97,4 +97,8 @@ public class MahjongTile implements Comparable<MahjongTile> {
   public String toString() {
     return (number % 10) + Character.toString("mpsz".charAt(number / 10));
   }
+
+  public MahjongTile add(int i) {
+    return new MahjongTile(getNumber() + i, getSuit());
+  }
 }
