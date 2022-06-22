@@ -52,6 +52,9 @@ public class MahjongRenderer implements UILayer {
   ByteBuffer imageBuffer;
   int frameCounter;
 
+  // Forces the camera to be viewed at a certain angle
+  int playerOverride;
+
   /**
    * Normal constructor.
    */
@@ -69,6 +72,7 @@ public class MahjongRenderer implements UILayer {
         .translate(cameraPos);
     matProjection = new Matrix4f().perspective((float) Math.toRadians(75), wnd.getWidth()/(float)wnd.getHeight(), 0.1f, 5.0f);
     int[] cookie = new int[1];
+    playerOverride = -1;
 
     // Model loading
     // Hardcoded vertices because easy
@@ -194,7 +198,7 @@ public class MahjongRenderer implements UILayer {
    */
   @Override
   public boolean onMouseMove(Window wnd, double newX, double newY) {
-    moveCamera(newX - wnd.getWidth() / 2.0, newY - wnd.getHeight() / 2.0, -1);
+    moveCamera(newX - wnd.getWidth() / 2.0, newY - wnd.getHeight() / 2.0);
     mouseX = newX;
     mouseY = newY;
     return false;
@@ -218,11 +222,11 @@ public class MahjongRenderer implements UILayer {
     return "MahjongRenderer";
   }
 
-  private void moveCamera(double xr, double yr, int playerIdOverride) {
+  private void moveCamera(double xr, double yr) {
     matView = new Matrix4f()
         .rotateXYZ((float) Math.toRadians(yr), -(float) Math.toRadians(xr), 0.0f)
         .translate(cameraPos)
-        .rotateY((float) Math.toRadians(-90.0f * (playerIdOverride != -1 ? playerIdOverride : (state != null ? state.getMyPlayerId() : 0.0f))));
+        .rotateY((float) Math.toRadians(-90.0f * (playerOverride != -1 ? playerOverride : (state != null ? state.getMyPlayerId() : 0.0f))));
   }
 
   private void renderTile(float[] transformMat, int texId, boolean highlight, int tileIdx, boolean raycast) {
@@ -320,7 +324,8 @@ public class MahjongRenderer implements UILayer {
 
     if(state == null) {
     } else if(state.getWinningHand() != null) {
-      moveCamera(0.0, 0.0, 0);
+      playerOverride = 0;
+      moveCamera(780 - 1920 / 2, 420 - 1080 / 2); // Hardcoded from my system, rotation amounts are device-agnostic
       renderHand(0, state.getWinningHand(), false, new boolean[state.getWinningHand().getLength()]);
     } else {
       for(int i = 0; i < 4; i++) {

@@ -107,11 +107,12 @@ public class Client {
       clientState.getPlayerHands()[pDerived.getPlayerId()] = pDerived.getHand();
       if(pDerived.getPlayerId() == clientState.getMyPlayerId() && pDerived.getHand().getLength() == 14) {
         clientState.setPlayerAction(MahjongClientState.PlayerAction.DISCARD_TILE);
+        clientState.checkTsumo();
       }
     } else if(p.getId() == WinPacketS2C.ID) {
       WinPacketS2C pDerived = (WinPacketS2C) p;
       clientState.setPlayerAction(MahjongClientState.PlayerAction.ENDED_GAME);
-      clientState.reportWin(pDerived.getHand());
+      clientState.reportWin(pDerived.getHand(), pDerived.getPlayerId());
     }
     clientState.getMyHand().getHidden().sort(Comparator.naturalOrder());
   }

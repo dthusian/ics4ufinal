@@ -247,8 +247,8 @@ public class MahjongGame {
       h.add(new MahjongTile("1m"));
       h.add(new MahjongTile("7z"));
       h.add(new MahjongTile("4s"));
-      h.add(new MahjongTile("5s"));
-      h.add(new MahjongTile("5s"));
+      h.add(new MahjongTile("4s"));
+      h.add(new MahjongTile("6s"));
       h.add(new MahjongTile("6s"));
       h.add(new MahjongTile("6s"));
 

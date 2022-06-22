@@ -6,6 +6,7 @@ import dev.wateralt.mc.ics4ufinal.client.MahjongClientState;
 import dev.wateralt.mc.ics4ufinal.client.Window;
 import dev.wateralt.mc.ics4ufinal.common.MahjongTile;
 import dev.wateralt.mc.ics4ufinal.common.network.*;
+import dev.wateralt.mc.ics4ufinal.common.yaku.Yaku;
 import org.lwjgl.glfw.GLFW;
 import org.lwjgl.nanovg.NVGColor;
 import org.lwjgl.nanovg.NanoVG;
@@ -38,39 +39,56 @@ public class MahjongExtras implements UILayer {
 
   @Override
   public void render(Window wnd) {
-    NVGColor col = NVGColor.malloc().r(0.0f).g(0.0f).b(1.0f).a(1.0f);
-    NanoVG.nvgBeginFrame(wnd.getNanoVG(), (float) wnd.getWidth(), (float) wnd.getHeight(), (float) wnd.getDpi());
-    NanoVG.nvgFillColor(wnd.getNanoVG(), col);
-    NanoVG.nvgStrokeColor(wnd.getNanoVG(), col);
-    NanoVG.nvgFontFaceId(wnd.getNanoVG(), NanoVGResources.fontSourceSansPro);
-    NanoVG.nvgFontSize(wnd.getNanoVG(), 40);
+    long nvg = wnd.getNanoVG();
+    NanoVG.nvgBeginFrame(nvg, (float) wnd.getWidth(), (float) wnd.getHeight(), (float) wnd.getDpi());
+    NanoVG.nvgFillColor(nvg, NanoVGResources.colorDarkBlue);
+    NanoVG.nvgStrokeColor(nvg, NanoVGResources.colorDarkBlue);
+    NanoVG.nvgFontFaceId(nvg, NanoVGResources.fontSourceSansPro);
+    NanoVG.nvgFontSize(nvg, 40);
+
+    // Draw crosshair
+    NanoVG.nvgBeginPath(nvg);
+    NanoVG.nvgMoveTo(nvg, wnd.getWidth() / 2, wnd.getHeight() / 2 - 20);
+    NanoVG.nvgLineTo(nvg, wnd.getWidth() / 2, wnd.getHeight() / 2 + 20);
+    NanoVG.nvgMoveTo(nvg, wnd.getWidth() / 2 - 20, wnd.getHeight() / 2);
+    NanoVG.nvgLineTo(nvg, wnd.getWidth() / 2 + 20, wnd.getHeight() / 2);
+    NanoVG.nvgStroke(nvg);
+    NanoVG.nvgClosePath(nvg);
+
     synchronized (state) {
       if (state.getPlayerAction() == MahjongClientState.PlayerAction.CALL_TILE) {
         if (state.getCallOptions().canPon()) {
-          NanoVG.nvgText(wnd.getNanoVG(), 50, wnd.getHeight() - 200, "[Q] Pon");
+          NanoVG.nvgText(nvg, 50, wnd.getHeight() - 200, "[Q] Pon");
         }
         if (state.getCallOptions().getChiList().size() > 0) {
-          NanoVG.nvgText(wnd.getNanoVG(), 50, wnd.getHeight() - 150, "[W] Chi");
+          NanoVG.nvgText(nvg, 50, wnd.getHeight() - 150, "[W] Chi");
         }
         if(state.getCallOptions().canRon()) {
-          NanoVG.nvgText(wnd.getNanoVG(), 50, wnd.getHeight() - 100, "[E] Ron");
+          NanoVG.nvgText(nvg, 50, wnd.getHeight() - 100, "[E] Ron");
         }
-        NanoVG.nvgText(wnd.getNanoVG(), 50, wnd.getHeight() - 250, "[Z] Skip");
+        NanoVG.nvgText(nvg, 50, wnd.getHeight() - 250, "[Z] Skip");
       } else if(state.getPlayerAction() == MahjongClientState.PlayerAction.SELECT_CHI) {
-        NanoVG.nvgTextAlign(wnd.getNanoVG(), NanoVG.NVG_ALIGN_CENTER);
-        NanoVG.nvgText(wnd.getNanoVG(), wnd.getWidth() / 2, wnd.getHeight() - 500, "Select a tile to chi");
-        NanoVG.nvgTextAlign(wnd.getNanoVG(), NanoVG.NVG_ALIGN_LEFT);
+        NanoVG.nvgTextAlign(nvg, NanoVG.NVG_ALIGN_CENTER);
+        NanoVG.nvgText(nvg, wnd.getWidth() / 2, wnd.getHeight() - 500, "Select a tile to chi");
+        NanoVG.nvgTextAlign(nvg, NanoVG.NVG_ALIGN_LEFT);
       } else if(state.getPlayerAction() == MahjongClientState.PlayerAction.DISCARD_TILE) {
-        NanoVG.nvgTextAlign(wnd.getNanoVG(), NanoVG.NVG_ALIGN_CENTER);
-        NanoVG.nvgText(wnd.getNanoVG(), wnd.getWidth() / 2, wnd.getHeight() - 500, "Discard a tile");
-        NanoVG.nvgTextAlign(wnd.getNanoVG(), NanoVG.NVG_ALIGN_LEFT);
+        NanoVG.nvgTextAlign(nvg, NanoVG.NVG_ALIGN_CENTER);
+        NanoVG.nvgText(nvg, wnd.getWidth() / 2, wnd.getHeight() - 500, "Discard a tile");
+        NanoVG.nvgTextAlign(nvg, NanoVG.NVG_ALIGN_LEFT);
         if(state.getCanTsumo()) {
-          NanoVG.nvgText(wnd.getNanoVG(), 50, wnd.getHeight() - 200, "[E] Tsumo");
+          NanoVG.nvgText(nvg, 50, wnd.getHeight() - 200, "[E] Tsumo");
+        }
+      } else if(state.getPlayerAction() == MahjongClientState.PlayerAction.ENDED_GAME) {
+        int i = 100;
+        NanoVG.nvgTextAlign(nvg, NanoVG.NVG_ALIGN_LEFT);
+        NanoVG.nvgText(nvg, 300, i, "Player %d wins!".formatted(state.getWinningId() + 1));
+        for(Yaku.YakuEntry yaku : state.getWinningYakus()) {
+          i += 50;
+          NanoVG.nvgText(nvg, 300, i, yaku.toString());
         }
       }
     }
-    NanoVG.nvgEndFrame(wnd.getNanoVG());
-    col.free();
+    NanoVG.nvgEndFrame(nvg);
   }
 
   @Override
