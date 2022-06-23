@@ -99,6 +99,9 @@ public abstract class Packet {
     } else if(type == WinPacketS2C.ID) {
       p = new WinPacketS2C();
       p.deserializeInternal(bytes.slice(8, length));
+    } else if(type == PlayerChangePacket.ID) {
+      p = new PlayerChangePacket();
+      p.deserializeInternal(bytes.slice(8, length));
     } else {
       return null;
     }

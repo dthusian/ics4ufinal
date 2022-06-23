@@ -1,4 +1,14 @@
 
+## Running the code
+
+There should be a .jar included with the source code. If not,
+you can build one with Gradle. Run `./gradlew jar` (or if using
+Windows CMD, `gradlew jar`). The jar must be executed on the same directory
+as the assets directory.
+
+You can play multiplayer with another player if they run the game,
+and you type in their ip address, a colon, then the port number 34567.
+
 ## Architecture
 
 The main game class is the MahjongGame class. This MahjongGame class
@@ -14,12 +24,4 @@ class, which track tile model orientations and animations.
 
 ## Stuff
 
-Debug tiles generated with https://jsfiddle.net/Lbo6g5kt/2/
-
-## TODO
-- Test network code
-- Impl pon/chi/kan
-- Impl yaku/win condition
-- Impl UI
-- Impl replay game
-- Impl animations (maybe)
+Tiles generated with https://jsfiddle.net/ejvpgLzd/4/

@@ -113,6 +113,9 @@ public class Client {
       WinPacketS2C pDerived = (WinPacketS2C) p;
       clientState.setPlayerAction(MahjongClientState.PlayerAction.ENDED_GAME);
       clientState.reportWin(pDerived.getHand(), pDerived.getPlayerId());
+    } else if(p.getId() == PlayerChangePacket.ID) {
+      PlayerChangePacket pDerived = (PlayerChangePacket) p;
+      clientState.setnPlayers(pDerived.getnPlayers());
     }
     clientState.getMyHand().getHidden().sort(Comparator.naturalOrder());
   }

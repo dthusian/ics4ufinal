@@ -164,133 +164,29 @@ public class MahjongGame {
   // Run game functions
 
   private void createDeckAndDeal(long seed) {
-    if(!Util.DEBUG) {
-      LinkedList<MahjongTile> genTiles = new LinkedList<>();
-      for(int i = 0; i < 4; i++) {
-        for(int j = 0; j < 9; j++) {
-          genTiles.add(new MahjongTile(j + 1, 'm'));
-          genTiles.add(new MahjongTile(j + 1, 'p'));
-          genTiles.add(new MahjongTile(j + 1, 's'));
-        }
-        for(int j = 0; j < 7; j++) {
-          genTiles.add(new MahjongTile(j + 1, 'z'));
-        }
+    LinkedList<MahjongTile> genTiles = new LinkedList<>();
+    for(int i = 0; i < 4; i++) {
+      for(int j = 0; j < 9; j++) {
+        genTiles.add(new MahjongTile(j + 1, 'm'));
+        genTiles.add(new MahjongTile(j + 1, 'p'));
+        genTiles.add(new MahjongTile(j + 1, 's'));
       }
-      deck.clear();
-      Random rand = new Random(seed);
-      while(!genTiles.isEmpty()) {
-        int idx = rand.nextInt(genTiles.size());
-        deck.add(genTiles.remove(idx));
+      for(int j = 0; j < 7; j++) {
+        genTiles.add(new MahjongTile(j + 1, 'z'));
       }
-      for (PlayerState player : players) {
-        player.hand.clear();
-        for (int j = 0; j < 13; j++) {
-          player.hand.getHidden().add(deck.remove());
-        }
-      }
-    } else {
-      for (PlayerState player : players) {
-        player.hand.clear();
-      }
-      ArrayList<MahjongTile> h = players[0].hand.getHidden();
-      h.add(new MahjongTile("2z"));
-      h.add(new MahjongTile("2z"));
-      h.add(new MahjongTile("2z"));
-      h.add(new MahjongTile("2z"));
-      h.add(new MahjongTile("2z"));
-
-      h.add(new MahjongTile("2z"));
-      h.add(new MahjongTile("2z"));
-      h.add(new MahjongTile("2z"));
-      h.add(new MahjongTile("2z"));
-      h.add(new MahjongTile("2z"));
-
-      h.add(new MahjongTile("2z"));
-      h.add(new MahjongTile("2z"));
-      h.add(new MahjongTile("2z"));
-      h = players[1].hand.getHidden();
-      h.add(new MahjongTile("2z"));
-      h.add(new MahjongTile("4s"));
-      h.add(new MahjongTile("2z"));
-      h.add(new MahjongTile("2z"));
-      h.add(new MahjongTile("2z"));
-
-      h.add(new MahjongTile("2z"));
-      h.add(new MahjongTile("2z"));
-      h.add(new MahjongTile("2z"));
-      h.add(new MahjongTile("2z"));
-      h.add(new MahjongTile("2z"));
-
-      h.add(new MahjongTile("2z"));
-      h.add(new MahjongTile("2z"));
-      h.add(new MahjongTile("2z"));
-      h = players[2].hand.getHidden();
-      h.add(new MahjongTile("6z"));
-      h.add(new MahjongTile("2z"));
-      h.add(new MahjongTile("2z"));
-      h.add(new MahjongTile("2z"));
-      h.add(new MahjongTile("2z"));
-
-      h.add(new MahjongTile("2z"));
-      h.add(new MahjongTile("2z"));
-      h.add(new MahjongTile("2z"));
-      h.add(new MahjongTile("2z"));
-      h.add(new MahjongTile("2z"));
-
-      h.add(new MahjongTile("2z"));
-      h.add(new MahjongTile("2z"));
-      h.add(new MahjongTile("2z"));
-      h = players[3].hand.getHidden();
-      h.add(new MahjongTile("2z"));
-      h.add(new MahjongTile("2z"));
-      h.add(new MahjongTile("1m"));
-      h.add(new MahjongTile("1m"));
-      h.add(new MahjongTile("7z"));
-      h.add(new MahjongTile("4s"));
-      h.add(new MahjongTile("4s"));
-      h.add(new MahjongTile("6s"));
-      h.add(new MahjongTile("6s"));
-      h.add(new MahjongTile("6s"));
-
-      h.add(new MahjongTile("9p"));
-      h.add(new MahjongTile("9p"));
-      h.add(new MahjongTile("7z"));
-
-      LinkedList<MahjongTile> genTiles = new LinkedList<>();
-      for(int i = 0; i < 4; i++) {
-        for(int j = 0; j < 9; j++) {
-          genTiles.add(new MahjongTile(j + 1, 'm'));
-          genTiles.add(new MahjongTile(j + 1, 'p'));
-          genTiles.add(new MahjongTile(j + 1, 's'));
-        }
-        for(int j = 0; j < 7; j++) {
-          genTiles.add(new MahjongTile(j + 1, 'z'));
-        }
-      }
-      deck.clear();
-      Random rand = new Random(seed);
-      while(!genTiles.isEmpty()) {
-        int idx = rand.nextInt(genTiles.size());
-        deck.add(genTiles.remove(idx));
-      }
-      deck.addFirst(new MahjongTile("9p"));
-      deck.addFirst(new MahjongTile("9p"));
-      deck.addFirst(new MahjongTile("9p"));
-      deck.addFirst(new MahjongTile("9p"));
-      deck.addFirst(new MahjongTile("9p"));
-      deck.addFirst(new MahjongTile("9p"));
-      deck.addFirst(new MahjongTile("9p"));
-      deck.addFirst(new MahjongTile("9p"));
-      deck.addFirst(new MahjongTile("9p"));
-      deck.addFirst(new MahjongTile("9p"));
-      deck.addFirst(new MahjongTile("9p"));
-      deck.addFirst(new MahjongTile("9p"));
-      deck.addFirst(new MahjongTile("9p"));
-      deck.addFirst(new MahjongTile("9p"));
-      deck.addFirst(new MahjongTile("9p"));
-      deck.addFirst(new MahjongTile("9p"));
     }
-
+    deck.clear();
+    Random rand = new Random(seed);
+    while(!genTiles.isEmpty()) {
+      int idx = rand.nextInt(genTiles.size());
+      deck.add(genTiles.remove(idx));
+    }
+    for (PlayerState player : players) {
+      player.hand.clear();
+      for (int j = 0; j < 13; j++) {
+        player.hand.getHidden().add(deck.remove());
+      }
+    }
   }
 
   private void broadcast(Packet p) {
@@ -440,6 +336,15 @@ public class MahjongGame {
    */
   public PlayerState getPlayer(int id) {
     return players[id];
+  }
+
+  public int getNumPlayers() {
+    for(int i = 0; i < players.length; i++) {
+      if(players[i] == null) {
+        return i;
+      }
+    }
+    return 4;
   }
 
 }

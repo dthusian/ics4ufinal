@@ -30,6 +30,8 @@ public class MahjongClientState {
   private ClientCallOptions callOptions;
   private boolean canTsumo;
 
+  public int nPlayers;
+
   private MahjongHand winningHand;
   private ArrayList<Yaku.YakuEntry> winningYakus;
   private int winningId;
@@ -52,6 +54,7 @@ public class MahjongClientState {
     playerAction = PlayerAction.NOTHING;
     callOptions = null;
     canTsumo = false;
+    nPlayers = 0;
   }
 
   /**
@@ -133,5 +136,13 @@ public class MahjongClientState {
     if(possibleWin != null && possibleWin.size() > 0) {
       canTsumo = true;
     }
+  }
+
+  public int getnPlayers() {
+    return nPlayers;
+  }
+
+  public void setnPlayers(int nPlayers) {
+    this.nPlayers = nPlayers;
   }
 }

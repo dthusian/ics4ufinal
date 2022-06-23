@@ -1,6 +1,7 @@
 package dev.wateralt.mc.ics4ufinal.server;
 
 import dev.wateralt.mc.ics4ufinal.common.Logger;
+import dev.wateralt.mc.ics4ufinal.common.network.PlayerChangePacket;
 import dev.wateralt.mc.ics4ufinal.server.controllers.NetworkPlayerController;
 import dev.wateralt.mc.ics4ufinal.server.controllers.NullController;
 
@@ -29,7 +30,7 @@ public class Server {
     if(nBots > 4 || nBots < 0) throw new IllegalArgumentException();
     socket = new ServerSocket(port);
     state = new MahjongGame();
-    logs = new Logger();
+    logs = new Logger(this);
     signal = new AtomicInteger();
     signal.set(0);
     needPlayers = 4 - nBots;
@@ -63,6 +64,9 @@ public class Server {
         Socket client = socket.accept();
         logs.info("Player connected: %s", client.getInetAddress().toString());
         state.addPlayer(new NetworkPlayerController(client));
+        for(int j = 0; j < state.getNumPlayers(); j++) {
+          state.getPlayer(j).getController().send(new PlayerChangePacket(state.getNumPlayers()));
+        }
       }
       state.runGame();
     } catch(IOException ignored) {

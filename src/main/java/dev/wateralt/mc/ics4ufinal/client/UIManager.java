@@ -42,8 +42,10 @@ public class UIManager {
     MahjongExtras extras = new MahjongExtras();
     extras.setClient(client);
     extras.setRenderer(renderer);
+    LobbyUI lobby = new LobbyUI(this);
+    lobby.setClientState(client.getClientState());
     wnd.addLayer(extras);
-    wnd.addLayer(new LobbyUI(this));
+    wnd.addLayer(lobby);
     wnd.setCursor(false);
   }
 

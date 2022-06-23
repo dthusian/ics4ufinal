@@ -24,11 +24,15 @@ public class PlayerChangePacket extends Packet {
   protected ByteBuffer serializeInternal() {
     ByteBuffer buf = ByteBuffer.allocate(4);
     buf.putInt(nPlayers);
-    return null;
+    return buf;
   }
 
   @Override
   protected void deserializeInternal(ByteBuffer buf) {
     nPlayers = buf.getInt(0);
+  }
+
+  public int getnPlayers() {
+    return nPlayers;
   }
 }
