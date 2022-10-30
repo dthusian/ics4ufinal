@@ -1,3 +1,8 @@
+# ics4ufinal
+
+This is the program I submitted for my Grade 12 Computer Science final project. It implements a basic Mahjong game with two standout features: 3D rendering and networked multiplayer.
+
+It is written in Java using the LWJGL3 library.
 
 ## Running the code
 
